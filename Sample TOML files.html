@@ -1,0 +1,571 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Default simulation settings &mdash; PyDSS 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Improved project management" href="Project management.html" />
+    <link rel="prev" title="About PyDSS" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> PyDSS
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Default simulation settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#default-visualization-settings">Default visualization settings</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="Project management.html">Improved project management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Result management.html">Enhanced result export features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Dynamic visualization capabilities.html">Dynamic visualization capabilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Dynamic plots.html">Frequency sweep plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Dynamic plots.html#gis-plot">GIS plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Dynamic plots.html#histogram-plot">Histogram plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Dynamic plots.html#voltage-sag-plot">Voltage sag plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Dynamic plots.html#time-series-plot">Time series plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Dynamic plots.html#voltage-current-heatmap-plot">Voltage / Current heatmap plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Dynamic plots.html#xy-plots">XY plots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Creating custom dynamic plots.html">Development of custom dynamic plots</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Extended controls library.html">Extended controls library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="PyDSS controllers.html">Fault controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyDSS controllers.html#pv-controller">PV controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyDSS controllers.html#pv-controller-gen">Pv controller [Gen]</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyDSS controllers.html#socket-controller">Socket controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyDSS controllers.html#storage-controller">Storage controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PyDSS controllers.html#xfmr-controller">Xfmr controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Creating custom controls.html">Extending PyDSS controllers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="External interfaces for cosimulation.html">External PyDSS interfaces</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html">The socket interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#the-helics-interface">The HELICS interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#the-api-interface">The API interface</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Automated comparison of scenarios.html">Automated scenario comparison</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PyDSS</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Default simulation settings</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/Sample TOML files.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="default-simulation-settings">
+<h1>Default simulation settings<a class="headerlink" href="#default-simulation-settings" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-TOML notranslate"><div class="highlight"><pre><span></span><span class="s">&quot;Log Results&quot;</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="s">&quot;Return Results&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="s">&quot;Export Mode&quot;</span> <span class="o">=</span> <span class="s">&quot;byClass&quot;</span>
+<span class="s">&quot;Export Style&quot;</span> <span class="o">=</span> <span class="s">&quot;Single file&quot;</span>
+
+<span class="s">&quot;Create dynamic plots&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="s">&quot;Open plots in browser&quot;</span> <span class="o">=</span> <span class="kc">true</span>
+
+<span class="s">&quot;Start Year&quot;</span> <span class="o">=</span> <span class="mi">2017</span>
+<span class="s">&quot;Start Day&quot;</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="s">&quot;Start Time (min)&quot;</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="s">&quot;End Day&quot;</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="s">&quot;End Time (min)&quot;</span> <span class="o">=</span> <span class="mf">1439.0</span>
+<span class="s">&quot;Date offset&quot;</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="s">&quot;Step resolution (sec)&quot;</span> <span class="o">=</span> <span class="mf">900.0</span>
+<span class="s">&quot;Max Control Iterations&quot;</span> <span class="o">=</span> <span class="mi">15</span>
+<span class="s">&quot;Error tolerance&quot;</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="s">&quot;Control mode&quot;</span> <span class="o">=</span> <span class="s">&quot;Time&quot;</span>
+<span class="s">&quot;Disable PyDSS controllers&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="s">&quot;Simulation Type&quot;</span> <span class="o">=</span> <span class="s">&quot;QSTS&quot;</span>
+<span class="s">&quot;Project Path&quot;</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="s">&quot;Active Project&quot;</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="s">&quot;Active Scenario&quot;</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="s">&quot;DSS File&quot;</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+
+<span class="s">&quot;Co-simulation Mode&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="s">&quot;Federate name&quot;</span> <span class="o">=</span> <span class="s">&quot;PyDSS&quot;</span>
+<span class="s">&quot;Time delta&quot;</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="s">&quot;Core type&quot;</span> <span class="o">=</span> <span class="s">&quot;zmq&quot;</span>
+<span class="s">&quot;Uninterruptible&quot;</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="s">&quot;Helics logging level&quot;</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="s">&quot;Enable frequency sweep&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="s">&quot;Fundamental frequency&quot;</span> <span class="o">=</span> <span class="mi">60</span>
+<span class="s">&quot;Start frequency&quot;</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="s">&quot;End frequency&quot;</span> <span class="o">=</span> <span class="mf">15.0</span>
+<span class="s">&quot;frequency increment&quot;</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="s">&quot;Neglect shunt admittance&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="s">&quot;Percentage load in series&quot;</span> <span class="o">=</span> <span class="mf">50.0</span>
+
+<span class="s">&quot;Logging Level&quot;</span> <span class="o">=</span> <span class="s">&quot;WARNING&quot;</span>
+<span class="s">&quot;Log to external file&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="s">&quot;Display on screen&quot;</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="s">&quot;Clear old log file&quot;</span> <span class="o">=</span> <span class="kc">false</span>
+
+<span class="s">&quot;Number of Monte Carlo scenarios&quot;</span> <span class="o">=</span> <span class="mi">-1</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Log Results- [Bool] - Set true if results need to be exported</p></li>
+<li><p>Return Results- [Bool] - Set true if running PyDSS in Cosimulation environment, RunStep function will return current system states</p></li>
+<li><p>Export Mode- [Str] - Possible options “byClass” and “byElement”</p></li>
+<li><p>Export Style- [Str] - possible options “Single_file” and “Separate_files”</p></li>
+<li><p>Create dynamic plots- [Bool] - Enable rendering of dynamic plots using bokeh</p></li>
+<li><p>Open plots in browser- [Bool] - Open plots  in s window. Will work if “Create dynamic plots” is set to true</p></li>
+<li><p>Simulation Type- [String] - Possible options “QSTS”, “Dynamic” and “Snapshot”</p></li>
+<li><p>Start Year- [Int] - Start year for the simulation study (em nb .g 2017)</p></li>
+<li><p>Start Day- [Int] - Start day for the simulation study. Index start at 1</p></li>
+<li><p>Start Time (min)- [Float] - Start time in minutes. Floating number can be used to account for second or sub second time points</p></li>
+<li><p>End Day- [Float] - End day for the simulation study</p></li>
+<li><p>End Time (min)- [Float] - end time in minutes</p></li>
+<li><p>Date offset- [Int] - Date offset to be added incase OpenDSS profiles do not start at the begining of the year</p></li>
+<li><p>Step resolution (sec)- [Float] - Time step resolution in seconds</p></li>
+<li><p>Max Control Iterations- [Int] - Maximum outer loop control iterations</p></li>
+<li><p>Error tolerance- [Float] - Error tolerance in per unit</p></li>
+<li><p>Control mode- [String] - Control mode options are “STATIC” or “Time”</p></li>
+<li><p>Disable PyDSS controllers- [Bool] - Disable all pyController in PyDSS. All controller implemented in DSS files will still work.</p></li>
+<li><p>Active Project- [String] - Name of project to run</p></li>
+<li><p>Active Scenario- [String] - Project scenario to use</p></li>
+<li><p>DSS File- [String] - The main OpenDSS file</p></li>
+<li><p>Co-simulation Mode - [Bool] - Set to true to enable Helics interface all other co-simulation settings only valid if this value is true</p></li>
+<li><p>Federate name - [str] - Name of the federate</p></li>
+<li><p>Time delta - [float] - The property controlling the minimum time delta for a federate</p></li>
+<li><p>Core type - [str] - Core tyoe to be used for communication</p></li>
+<li><p>Uninterruptible - [Bool] - Can the federate be interepted</p></li>
+<li><p>Helics logging level - [int] - log</p></li>
+<li><p>Enable frequency sweep- [Bool] - Enable harmonic sweep. works with only ‘Static’ and ‘QSTS’ simulation modes</p></li>
+<li><p>Fundamental frequency- [Float] - Fundamental system frequeny in Hertz</p></li>
+<li><p>Start frequency- [Float] - as multiple of fundamental frequency</p></li>
+<li><p>End frequency- [Float] - as multiple of fundamental frequency</p></li>
+<li><p>Frequency increment- [Float] - as multiple of fundamental</p></li>
+<li><p>Neglect shunt admittance- [Bool] - Neglect shunt addmittance for frequency sweep</p></li>
+<li><p>Percentage load in series- [Float] - Percent of load that is series RL for Harmonic studies</p></li>
+<li><p>Logging Level- [String] - possible options “DEBUG”, “INFO”, “WARNING” or “ERROR”</p></li>
+<li><p>Log to external file- [Bool] - Boolean variable</p></li>
+<li><p>Display on screen- [Bool] - Boolean variable</p></li>
+<li><p>Clear old log file- [Bool] - Boolean variable</p></li>
+<li><p>Number of Monte Carlo scenarios- [Int] -  Should be set to -1 to disbale MC simulation mode</p></li>
+</ul>
+</div>
+<div class="section" id="default-visualization-settings">
+<h1>Default visualization settings<a class="headerlink" href="#default-visualization-settings" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-TOML notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Simulations</span><span class="p">]</span> 
+<span class="n">Run_simulations</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Generate_visuals</span> <span class="o">=</span> <span class="n">false</span> 
+<span class="n">Run_bokeh_server</span> <span class="o">=</span> <span class="kc">false</span>
+
+<span class="k">[Plots]</span>
+<span class="n">Frequency_sweep</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">XFMR_tap</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Voltage_sag</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Voltage</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Loading</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Voltage_Loading</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Voltage_profiles</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Load</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Generation</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Load_Generation</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Curtailment</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Voltage_imbalance</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Feeder_power</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Feeder_line_losses</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Feeder_losses</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Feeder_substation_losses</span> <span class="o">=</span> <span class="kc">false</span>
+
+<span class="k">[Visualization]</span>
+<span class="n">Plotting_mode</span> <span class="o">=</span><span class="s">&quot;Separate&quot;</span>
+<span class="n">FileType</span> <span class="o">=</span> <span class="s">&#39;png&#39;</span>
+
+<span class="k">[Visualization.Curtailment_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+<span class="n">Show_operation_regions</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Y_ranges</span> <span class="o">=</span> <span class="k">[0.0, 2.5, 5.0, 100.0]</span>
+<span class="n">Y_range_labels</span> <span class="o">=</span> <span class="k">[&quot;Low curtailment&quot;, &quot;Imtermediate curtailment&quot;, &quot;High curtailment&quot;,]</span>
+<span class="n">Y_range_colors</span> <span class="o">=</span> <span class="k">[&quot;green&quot;, &quot;blue&quot;, &quot;darkblue&quot;]</span>
+
+<span class="k">[Visualization.Feeder_power_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+
+<span class="k">[Visualization.Feeder_line_losses_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+
+<span class="k">[Visualization.Feeder_losses_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+
+<span class="k">[Visualization.Feeder_substation_losses_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+
+<span class="k">[Visualization.Voltage_imbalance_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+<span class="n">Show_operation_regions</span> <span class="o">=</span> <span class="kc">false</span>
+<span class="n">Y_ranges</span> <span class="o">=</span> <span class="k">[0.0, 0.90, 0.95, 1.05, 1.10, 1.5]</span>
+<span class="n">Y_range_labels</span> <span class="o">=</span> <span class="k">[&quot;UV trip region&quot;, &quot;Voltage control region&quot;, &quot;Normal operation region&quot;, &quot;Voltage control region&quot;, &quot;OV trip region&quot;]</span>
+<span class="n">Y_range_colors</span> <span class="o">=</span> <span class="k">[&quot;orange&quot;, &quot;yellow&quot;, &quot;green&quot;, &quot;blue&quot;, &quot;darkblue&quot;]</span>
+
+<span class="k">[Visualization.Frequency_sweep_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">800</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">600</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Color_template</span> <span class="o">=</span> <span class="s">&quot;Blues&quot;</span>
+<span class="c1"># Elements - List - List of bus names. An empy list would mean all</span>
+<span class="n">Elements</span> <span class="o">=</span> <span class="k">[]</span>
+
+<span class="k">[Visualization.XFMR_tap_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+
+<span class="k">[Visualization.Generation_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+<span class="c1"># Class - str - possible options &#39;Generators&#39;, &#39;PVSystems&#39;</span>
+<span class="n">Class</span> <span class="o">=</span> <span class="s">&quot;PVSystems&quot;</span>
+
+<span class="k">[Visualization.Load_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+
+<span class="k">[Visualization.Voltage_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+<span class="n">Color_template</span> <span class="o">=</span> <span class="s">&quot;Blues&quot;</span>
+<span class="n">Show_operation_regions</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Y_ranges</span> <span class="o">=</span> <span class="k">[0.0, 0.90, 0.95, 1.05, 1.10, 1.5]</span>
+<span class="n">Y_range_labels</span> <span class="o">=</span> <span class="k">[&quot;UV trip region&quot;, &quot;Voltage control region&quot;, &quot;Normal operation region&quot;, &quot;Voltage control region&quot;, &quot;OV trip region&quot;]</span>
+<span class="n">Y_range_colors</span> <span class="o">=</span> <span class="k">[&quot;orange&quot;, &quot;yellow&quot;, &quot;green&quot;, &quot;blue&quot;, &quot;darkblue&quot;]</span>
+
+<span class="k">[Visualization.Loading_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Line_width</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Line_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Fill_alpha</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+<span class="n">Color_template</span> <span class="o">=</span> <span class="s">&quot;Blues&quot;</span>
+<span class="n">Show_operation_regions</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Y_ranges</span> <span class="o">=</span> <span class="k">[0.0, 15.0, 85.0, 10000.0]</span>
+<span class="n">Y_range_labels</span> <span class="o">=</span> <span class="k">[&quot;under loaded region&quot;, &quot;Normal loading region&quot;, &quot;Over loaded region&quot;]</span>
+<span class="n">Y_range_colors</span> <span class="o">=</span> <span class="k">[&quot;orange&quot;, &quot;green&quot;, &quot;darkblue&quot;]</span>
+<span class="c1"># Class - str - possible options &#39;Lines&#39;, &#39;Transformers&#39;, &#39;Capacitor&#39;</span>
+<span class="n">Class</span> <span class="o">=</span> <span class="s">&quot;Transformers&quot;</span>
+
+<span class="k">[Visualization.Voltage_sag_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">Width</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">UV</span> <span class="o">=</span> <span class="k">[0.97, 0.95, 0.90]</span>
+<span class="n">OV</span> <span class="o">=</span> <span class="k">[1.03, 1.05, 1.1]</span>
+<span class="n">display_limits</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Alpha</span> <span class="o">=</span> <span class="mf">0.3</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">Time</span> <span class="o">=</span> <span class="s">&quot;2017-01-01 02:30:00&quot;</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+
+
+<span class="k">[Visualization.Load_Generation_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Display_limits</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Alpha</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="c1"># kind - str - possible options &#39;scatter&#39;, &#39;reg&#39;, &#39;resid&#39;, &#39;kde&#39;, &#39;hex&#39;</span>
+<span class="n">Kind</span> <span class="o">=</span> <span class="s">&quot;kde&quot;</span>
+<span class="c1"># Class - str - possible options &#39;Generators&#39;, &#39;PVSystems&#39;</span>
+<span class="n">Class</span> <span class="o">=</span> <span class="s">&quot;PVSystems&quot;</span>
+
+<span class="k">[Visualization.Voltage_Loading_settings]</span>
+<span class="n">Height</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="n">DPI</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">Display_limits</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="n">Alpha</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">Legend_font_size</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">Frequency</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">Simulation_mode</span> <span class="o">=</span> <span class="s">&quot;Yearly&quot;</span>
+<span class="n">Grid</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="c1"># kind - str - possible options &#39;scatter&#39;, &#39;reg&#39;, &#39;resid&#39;, &#39;kde&#39;, &#39;hex&#39;</span>
+<span class="n">Kind</span> <span class="o">=</span> <span class="s">&quot;kde&quot;</span>
+<span class="c1"># Class - str - possible options &#39;Lines&#39;, &#39;Transformers&#39;</span>
+<span class="n">Class</span> <span class="o">=</span> <span class="s">&quot;Transformers&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>[Simulations].Run_simulations-  [Bool] - Run the simulation or not</p></li>
+<li><p>[Simulations].Generate_visuals- [Bool] - Create comparative plots. If Run_simulations is false, simulation results from older simulation results will be used if available. If no results are available, an assertion error will be raied.</p></li>
+<li><p>[Simulations].Run_bokeh_server- [Bool] - Run bokeh server. Will only work if Run_simulations Run_bokeh_server = false</p></li>
+<li><p>[Plots].&lt;any plot type&gt;- [Bool] - Enable plots to be created for the given list of scenarios.</p></li>
+<li><p>[Visualization].Plotting_mode- [Str]- possible_values ‘Single’, ‘Separate’</p></li>
+<li><p>[Visualization].FileType - [Str]- possible_values ‘png’, ‘pdf’</p></li>
+</ul>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Project management.html" class="btn btn-neutral float-right" title="Improved project management" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="About PyDSS" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Aadil Latif
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
