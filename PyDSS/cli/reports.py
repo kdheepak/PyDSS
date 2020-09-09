@@ -83,8 +83,8 @@ def printReport(logsPath, project, scenario, report):
         report, project, scenario
     )
     with open(os.path.join(logsPath, fileName), "r") as f:
-        for line in f:
-    lines = f.readlines()
+        #for line in f:
+        lines = f.readlines()
     tableData = []
     Keys = {}
 

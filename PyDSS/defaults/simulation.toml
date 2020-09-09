@@ -106,7 +106,7 @@
 # Open plots in browser- [Bool] - Open plots  in s window. Will work if "Create dynamic plots" is set to true
 [Plots]
 "Create dynamic plots" = false
-"Open plots in browser" = true
+"Open plots in browser" = false
 
 [Profiles]
 "Use profile manager" = false

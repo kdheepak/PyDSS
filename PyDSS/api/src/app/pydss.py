@@ -97,7 +97,7 @@ class PyDSS:
         try:
             self.pydss_obj.init(args)
             export_path = os.path.join(self.pydss_obj._dssPath['Export'], args['Project']['Active Scenario'])
-            self.a_writer = ArrowWriter(export_path)
+            self.a_writer = ArrowWriter(export_path, 50)
             self.initalized = True
             return 200, "PyDSS project successfully loaded"
         except Exception as e:
@@ -106,6 +106,7 @@ class PyDSS:
     def run(self, params):
         if self.initalized:
             try:
+                self.pydss_obj.enter_helics_execution_mode()
                 Steps, sTime, eTime = self.pydss_obj._dssSolver.SimulationSteps()
                 for i in range(Steps):
                     results = self.pydss_obj.RunStep(i)
@@ -120,17 +121,17 @@ class PyDSS:
                             restructured_results[class_name] = {}
                         if not isinstance(val, complex):
                             restructured_results[class_name][elem_name] = val
-                    self.a_writer.write(
-                        self.pydss_obj._Options["Helics"]["Federate name"],
-                        self.pydss_obj._dssSolver.GetTotalSeconds(),
-                        restructured_results
-                    )
+                    # self.a_writer.write(
+                    #     self.pydss_obj._Options["Helics"]["Federate name"],
+                    #     self.pydss_obj._dssSolver.GetTotalSeconds(),
+                    #     restructured_results
+                    # )
 
                 self.initalized = False
                 return 200, f"Simulation complete..."
             except Exception as e:
                 self.initalized = False
-                return 500, f"Simulation crashed at at simulation time step: {self.pydss_obj._dssSolver.GetDateTime()}, {e}"
+                return 500, f"Simulation crashed at simulation time step: {self.pydss_obj._dssSolver.GetDateTime()}, {e}"
         else:
             return 500, f"No project initialized. Load a project first using the 'init' command"
 

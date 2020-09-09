@@ -1,8 +1,11 @@
 from PyDSS.pyContrReader import pyExportReader, pySubscriptionReader
 from PyDSS.pyLogger import getLoggerTag
+from PyDSS.naerm import *
 import logging
 import helics
 import os
+
+NAERM_STANDARD = True
 
 class helics_interface:
 
@@ -133,6 +136,7 @@ class helics_interface:
             subscription['Subscription'] = sub
             self._subscriptions[element] = subscription
             self._subscription_dState[element] = [self.init_state] * self.n_states
+        #self._logger.info('Subscriptions finished')
         return
 
     def updateHelicsSubscriptions(self):
@@ -172,7 +176,10 @@ class helics_interface:
                         #print(self._subscription_dState[element_name])
         self.c_seconds_old = self.c_seconds
 
+
     def _registerFederatePublications(self, pubs):
+
+        # self._logger.info('Publications registration starting')
         if pubs is not None:
             publicationList= pubs
         else:
@@ -185,26 +192,65 @@ class helics_interface:
             )
             publicationList = self._file_reader.publicationList
         self._publications = {}
+
+        # self._logger.info('Hello I am here')
         for valid_publication in publicationList:
             obj_class, obj_property = valid_publication.split(' ')
             objects = self._objects_by_class[obj_class]
             for obj_X, obj in objects.items():
                 name = '{}.{}.{}'.format(self._options['Helics']['Federate name'], obj_X, obj_property)
-                self._publications[name] = helics.helicsFederateRegisterGlobalTypePublication(
+                
+                if NAERM_STANDARD:
+                    self._logger.info(f'{name}')
+                    message = pydss_to_naerm(name)
+                    self._logger.info(f'Being converted {name} to {message}')
+                    if message != 'Failed':
+                        name = message
+                    
+                        if not isinstance(name, list):
+                            name = [name]
+                        for n in name:
+                            self._publications[n] = helics.helicsFederateRegisterGlobalTypePublication(
+                                self._PyDSSfederate,
+                                n,
+                                n.split('/')[-1],
+                                ''
+                                )
+                            self._logger.info(f'Publication registered: {n}')
+
+
+                else:
+                    self._publications[name] = helics.helicsFederateRegisterGlobalTypePublication(
                     self._PyDSSfederate,
                     name,
                     self.type_info[obj_property],
                     ''
-                )
-                self._logger.info(f'Publication registered: {name}')
+                    )
+                    self._logger.info(f'Publication registered: {name}')
         return
 
     def updateHelicsPublications(self):
+        
         for element, pub in self._publications.items():
+            
+            naerm_name = None
+            self._logger.info(f'Trying to publish for {element}')
+            if isnaerm(element):
+                naerm_name = element
+                element = naerm_to_pydss(element)
+            
             fed_name, class_name, object_name, ppty_name = element.split('.')
             obj_name = '{}.{}'.format(class_name, object_name)
             obj = self._objects_by_element[obj_name]
             value = obj.GetValue(ppty_name)
+
+            if naerm_name is not None:
+                message = get_naerm_value(value, naerm_name)
+                if message == 'Failed':
+                    self._logger.error(f'Could not get values for {naerm_name}')
+                else:
+                    value = message
+
             if isinstance(value, list):
                 helics.helicsPublicationPublishVector(pub, value)
             elif isinstance(value, float):
@@ -215,6 +261,8 @@ class helics_interface:
                 helics.helicsPublicationPublishBoolean(pub, value)
             elif isinstance(value, int):
                 helics.helicsPublicationPublishInteger(pub, value)
+        
+        self._logger.info('Publications finsihed')
         return
 
     def request_time_increment(self):

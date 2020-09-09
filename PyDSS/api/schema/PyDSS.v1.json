@@ -125,23 +125,23 @@
                                         "parameters": {
                                             "Active Project": "custom_contols",
                                             "Active Scenario": "base_case",
-                                            "Co-simulation Mode": false,
+                                            "Co-simulation Mode": true,
                                             "Control mode": "Static",
                                             "DSS File": "Master_Spohn_existing_VV.dss",
                                             "Date offset": 0,
                                             "End Day": 1,
-                                            "End Time (min)": 1439,
+                                            "End Time (min)": 1,
                                             "Error tolerance": 0.001,
-                                            "Federate name": "PyDSS_x",
+                                            "Federate name": "der_fed",
                                             "Log Results": false,
                                             "Max Control Iterations": 50,
-                                            "Project Path": "C:/Users/alatif/Desktop/PyDSS_2.0/PyDSS/examples",
+                                            "Project Path": "C:/Users/KDUWADI/Box/NAERM_project/PyDSSexamples/examples",
                                             "Result Container": "ResultContainer",
                                             "Simulation Type": "QSTS",
                                             "Start Day": 1,
                                             "Start Time (min)": 0,
                                             "Start Year": 2017,
-                                            "Step resolution (sec)": 900
+                                            "Step resolution (sec)": 1
                                         }
                                     }
                                 },

@@ -154,10 +154,18 @@ class OpenDSS:
                     self._pyPlotObjects[Plot].session.show()
                 break
         self._increment_flag = True
-        if params['Helics']["Co-simulation Mode"]:
-            self._HI = HI.helics_interface(self._dssSolver, self._dssObjects, self._dssObjectsByClass, params,
+        self.params = params
+        # if params['Helics']["Co-simulation Mode"]:
+        #     self._HI = HI.helics_interface(self._dssSolver, self._dssObjects, self._dssObjectsByClass, params,
+        #                                    self._dssPath)
+        # return
+    
+    def enter_helics_execution_mode(self):
+        if self.params['Helics']["Co-simulation Mode"]:
+            self._HI = HI.helics_interface(self._dssSolver, self._dssObjects, self._dssObjectsByClass, self.params,
                                            self._dssPath)
         return
+    
 
     def _ModifyNetwork(self):
         # self._Modifier.Add_Elements('Storage', {'bus' : ['storagebus'], 'kWRated' : ['2000'], 'kWhRated'  : ['2000']},
@@ -352,6 +360,7 @@ class OpenDSS:
                 self._dssSolver.setMode('Yearly')
 
         if self._Options['Helics']['Co-simulation Mode']:
+            self._Logger.info('Going into updating publications')
             self._HI.updateHelicsPublications()
             self._increment_flag, helics_time = self._HI.request_time_increment()
 
