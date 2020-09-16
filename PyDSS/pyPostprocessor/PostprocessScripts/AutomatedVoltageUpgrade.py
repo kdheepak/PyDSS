@@ -537,7 +537,9 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 # determining key with minimum objective func. at various levels
                 # (at this point includes pre-reg, sub-LTC)
                 min_cluster = ''
-                min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * self.upper_limit
+                min_severity = 1000000000
+                # min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * self.upper_limit
+                print("Severity: ", pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * self.upper_limit)
                 for key, vals in self.cluster_optimal_reg_nodes.items():
                     if vals[0] < min_severity:
                         min_severity = vals[0]
@@ -561,7 +563,9 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 self.get_shortest_path()
                 self.get_full_distance_dict()
                 self.cluster_square_array()
-                min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * self.upper_limit
+                min_severity = 1000000000
+                # min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * self.upper_limit
+                print("Severity: ", pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * self.upper_limit)
                 #  determining key with minimum objective func. at various levels
                 # (at this point includes pre-reg, sub-LTC, and all newly added regulators)
                 min_cluster = ''
@@ -1496,7 +1500,10 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
         best_setting = ''
         # Start with assumption that each node has a violation at all time points and each violation if outside bounds
         #  by upper voltage limit - basically the maximum possible severity
-        min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * upper_limit
+        min_severity = 1000000000
+        # min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * upper_limit
+        print("In function: apply_best_capsetting: Severity: ", pow(len(self.all_bus_names), 2) *
+              len(self.config["tps_to_test"]) * upper_limit)
         for key, val in self.cap_sweep_res_dict.items():
             if val < min_severity:
                 min_severity = val
@@ -1581,7 +1588,10 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
         best_setting = ''
         # Start with assumption that each node has a violation at all time points and each violation if outside bounds
         #  by upper voltage limit - basically the maximum possible severity
-        min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * upper_limit
+        min_severity = 1000000000
+        # min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * upper_limit
+        print("In function: apply_best_regsetting: Severity: ", pow(len(self.all_bus_names), 2) *
+              len(self.config["tps_to_test"]) * upper_limit)
         for key, val in self.reg_sweep_viols.items():
             if val < min_severity:
                 min_severity = val
@@ -1944,7 +1954,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
         #  by upper voltage limit - basically the maximum possible severity
         min_severity = 10000000000000
         # min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * upper_limit
-        print("Severity: ", pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * upper_limit)
+        print("In function: apply_best_LTCsetting:  Severity: ", pow(len(self.all_bus_names), 2) *
+              len(self.config["tps_to_test"]) * upper_limit)
         print(self.subLTC_sweep_viols)
         for key, val in self.subLTC_sweep_viols.items():
             if val < min_severity:
@@ -2214,6 +2225,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
             # For a given cluster identify the node which leads to minimum number of buses with violations
             min_severity = 1000000000
             # min_severity = pow(len(self.all_bus_names), 2) * len(self.config["tps_to_test"]) * upper_limit
+            print("In function: add_new_reg_common_nodes:  Severity: ", pow(len(self.all_bus_names), 2) *
+                  len(self.config["tps_to_test"]) * upper_limit)
             min_node = ''
             for key, value in self.vdev_cluster_nodes.items():
                 if value <= min_severity:

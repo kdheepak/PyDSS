@@ -121,16 +121,36 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
 
         # Determine available upgrades - either by looping over the existing feeder or by reading an
         #  externally created library
-        if self.config["Create_upgrades_library"]:
-            self.logger.debug("Creating upgrades library from the feeder")
-            self.determine_available_line_upgrades()
+        # if self.config["Create_upgrades_library"]:
+        #     self.logger.debug("Creating upgrades library from the feeder")
+        #     self.determine_available_line_upgrades()
+        #     self.determine_available_xfmr_upgrades()
+        #     self.logger.debug("Library created")
+        # else:
+        #     self.logger.debug("Reading external upgrades library")
+        #     self.avail_line_upgrades = self.read_available_upgrades("Line_upgrades_library")
+        #     self.avail_xfmr_upgrades = self.read_available_upgrades("Transformer_upgrades_library")
+        #     self.logger.debug("Upgrades library read")
+
+        # this is done separately for transformer and line upgrades library (15Sep2020)
+        if self.config["Create_xfmr_upgrades_library"]:
+            self.logger.info("Creating transformer upgrades library from the feeder")
             self.determine_available_xfmr_upgrades()
-            self.logger.debug("Library created")
+            self.logger.debug("Xfmr upgrades Library created")
         else:
-            self.logger.debug("Reading external upgrades library")
-            self.avail_line_upgrades = self.read_available_upgrades("Line_upgrades_library")
+            self.logger.info("Reading external xfmr upgrades library")
             self.avail_xfmr_upgrades = self.read_available_upgrades("Transformer_upgrades_library")
-            self.logger.debug("Upgrades library created")
+            self.logger.debug("Xfmr Upgrades library read")
+
+        if self.config["Create_line_upgrades_library"]:
+            self.logger.info("Creating line upgrades library from the feeder")
+            self.determine_available_line_upgrades()
+            self.logger.debug("Line Upgrades Library created")
+        else:
+            self.logger.info("Reading external line upgrades library")
+            self.avail_line_upgrades = self.read_available_upgrades("Line_upgrades_library")
+            self.logger.debug("Line Upgrades library read")
+
         # Determine initial loadings
         self.determine_line_ldgs()
         self.determine_xfmr_ldgs()
@@ -158,7 +178,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.V_upper_thresh = 1.05
         self.V_lower_thresh = 0.95
         self.get_nodal_violations()
-
+        # breakpoint()
         self.feeder_parameters["initial_violations"] = {
             "Number of lines with violations": len(self.line_violations),
             "Number of xfmrs with violations": len(self.xfmr_violations),
@@ -183,12 +203,43 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
 
         # Mitigate thermal violations
         self.Line_trial_counter = 0
-        while len(self.xfmr_violations) > 0 or len(self.line_violations) > 0:
+        self.max_upgrade_iteration = min(20, len(self.xfmr_violations) + len(self.line_violations))
+        while (len(self.xfmr_violations) > 0 or len(self.line_violations) > 0) \
+                and self.Line_trial_counter < self.max_upgrade_iteration:
+            prev_xfmr = len(self.xfmr_violations)
+            prev_line = len(self.line_violations)
+            print(len(self.xfmr_violations))
+            print(len(self.line_violations))
+            # breakpoint()
             self.dssSolver.Solve()
+            print(dss.Solution.Converged())
+            # breakpoint()
             self.determine_line_ldgs()
-            self.correct_line_violations()
+            self.dssSolver.Solve()
+            print(dss.Solution.Converged())
+            # print("After determine_line_ldgs")
+            if len(self.line_violations) > prev_line:
+                raise Exception(f"Line violations increased from {prev_line} to {len(self.line_violations)} "
+                                f"during upgrade process")
+            # print(len(self.xfmr_violations))
+            # print(self.line_violations)
+            if len(self.line_violations) > 0:
+                self.correct_line_violations()
+            # print("After correct_line_violations")
+            # print(len(self.xfmr_violations))
+            # print(self.line_violations)
             self.determine_xfmr_ldgs()
-            self.correct_xfmr_violations()
+            # print("After determine_xfmr_ldgs")
+            if len(self.xfmr_violations) > prev_xfmr:
+                raise Exception(f"Xfmr violations increased from {prev_xfmr} to {len(self.xfmr_violations)} "
+                                f"during upgrade process")
+            # print(len(self.xfmr_violations))
+            # print(self.line_violations)
+            if len(self.xfmr_violations) > 0:
+                self.correct_xfmr_violations()
+            # print("After correct_xfmr_violations")
+            # print(len(self.xfmr_violations))
+            # print(self.line_violations)
             num_elms_violated_curr_itr = len(self.xfmr_violations) + len(self.line_violations)
             self.logger.info("Iteration Count: %s", self.Line_trial_counter)
             self.logger.info("Number of devices with violations: %s", num_elms_violated_curr_itr)
@@ -210,38 +261,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         dss.run_command("Clear")
         base_dss = os.path.join(project.dss_files_path, self.Settings["Project"]["DSS File"])
 
-        # # appending redirect to Territory wide line codes and line geometry file LA specific
-        # territory_linecode = os.path.join(self.config["upgrade_library_path"], "Territory_LineCodes.dss")
-        # territory_linegeometry = os.path.join(self.config["upgrade_library_path"], "Territory_LineGeometry.dss")
-        # redirect_list = [f'Redirect {territory_linecode}\n', f'Redirect {territory_linegeometry}\n', 'Solve\n']
-        # p = re.compile('^Redirect\s(\S*)')  # captures master dss path"
-        # # read deployment.dss file to get master dss path
-        # with open(base_dss, "r") as file_object:
-        #     for line in file_object:
-        #         if 'master' in line.lower():
-        #             m = re.search(p, line)
-        #             if m:
-        #                 master_file = m[0]
-        # file_object.close()
-        #
-        # # open master file (comment existing line code and line geometry redirect, and add new redirect)
-        # f_content = f.read()
-        # f_content = re.sub(r'Redirect LineCodes.dss', r'!Redirect LineCodes.dss', f_content)
-        # f_content = re.sub(r'Redirect LineGeometry.dss', r'!Redirect LineGeometry.dss', f_content)
-        # # return pointer to top of file so we can re-write the content with replaced string
-        # f.seek(0)
-        # # clear file content
-        # f.truncate()
-        # # re-write the content with the updated content
-        # f.write(f_content)
-        # # close file
-        # f.close()
-        #     # for line in file_object:
-        #     #     # Append redirects at the end of file
-        #     #     for line in redirect_list:
-        #     #         file_object.write(line)
-        # breakpoint()
-
         # check_redirect(base_dss)
         result = dss.run_command(f"Redirect {base_dss}")
         if result != "":
@@ -251,6 +270,9 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.dssSolver.Solve()
 
         # Get final loadings
+        self.determine_xfmr_ldgs()
+        self.determine_line_ldgs()
+
         self.final_line_ldg_lst = []
         self.final_xfmr_ldg_lst = []
         self.equip_ldgs = {}
@@ -261,11 +283,39 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         for key, vals in self.all_xfmr_ldgs.items():
             self.final_xfmr_ldg_lst.append(vals[0] * 100 / vals[1])
             self.equip_ldgs["Xfmr_" + key] = (vals[0] * 100 / vals[1])
+
         self.write_to_json(self.equip_ldgs, "Final_equipment_loadings_pen_{}".format(self.pen_level))
         self.orig_line_ldg_lst.sort(reverse=True)
         self.final_line_ldg_lst.sort(reverse=True)
         self.orig_xfmr_ldg_lst.sort(reverse=True)
         self.final_xfmr_ldg_lst.sort(reverse=True)
+
+        feeder_head_name = dss.Circuit.Name()
+        feeder_head_bus = dss.CktElement.BusNames()[0].split(".")[0]
+        dss.Circuit.SetActiveBus(feeder_head_bus)
+        feeder_head_basekv = dss.Bus.kVBase()
+        num_nodes = dss.Bus.NumNodes()
+        if num_nodes > 1:
+            feeder_head_basekv = round(feeder_head_basekv*math.sqrt(3),1)
+
+        # final computation of violations
+        self.get_nodal_violations()
+        self.feeder_parameters["final_violations"] = {
+            "Number of lines with violations": len(self.line_violations),
+            "Number of xfmrs with violations": len(self.xfmr_violations),
+            "Max line loading observed": max(self.final_line_ldg_lst),
+            "Max xfmr loading observed": max(self.final_xfmr_ldg_lst),
+            "Maximum voltage on any bus": self.max_V_viol,
+            "Minimum voltage on any bus": self.min_V_viol,
+            "Number of buses outside ANSI A limits": len(self.cust_viol),
+        }
+        self.feeder_parameters["Simulation time (seconds)"] = end - start
+        self.feeder_parameters["Upgrade status"] = self.upgrade_status
+        self.feeder_parameters["feederhead_name"] = feeder_head_name
+        self.feeder_parameters["feederhead_basekV"] = feeder_head_basekv
+
+        self.write_to_json(self.feeder_parameters, "Thermal_violations_comparison")
+
         if self.config["Create_upgrade_plots"]:
             self.create_op_plots()
 
@@ -291,37 +341,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         # save new upgraded objects
         self.new_xfmrs = {x["name"]: x for x in iter_elements(dss.Transformers, get_transformer_info)}
         self.new_lines = {x["name"]: x for x in iter_elements(dss.Lines, self.get_line_info)}
-
-        self.determine_line_ldgs()
-        self.determine_xfmr_ldgs()
-        # if self.config["Create_upgrade_plots"]:
-        #     self.create_op_plots()
-
-        feeder_head_name = dss.Circuit.Name()
-        feeder_head_bus = dss.CktElement.BusNames()[0].split(".")[0]
-        dss.Circuit.SetActiveBus(feeder_head_bus)
-        feeder_head_basekv = dss.Bus.kVBase()
-        num_nodes = dss.Bus.NumNodes()
-        if num_nodes>1:
-            feeder_head_basekv = round(feeder_head_basekv*math.sqrt(3),1)
-
-        # final computation of violations
-        self.get_nodal_violations()
-        self.feeder_parameters["final_violations"] = {
-            "Number of lines with violations": len(self.line_violations),
-            "Number of xfmrs with violations": len(self.xfmr_violations),
-            "Max line loading observed": max(self.final_line_ldg_lst),
-            "Max xfmr loading observed": max(self.final_xfmr_ldg_lst),
-            "Maximum voltage on any bus": self.max_V_viol,
-            "Minimum voltage on any bus": self.min_V_viol,
-            "Number of buses outside ANSI A limits": len(self.cust_viol),
-        }
-        self.feeder_parameters["Simulation time (seconds)"] = end - start
-        self.feeder_parameters["Upgrade status"] = self.upgrade_status
-        self.feeder_parameters["feederhead_name"] = feeder_head_name
-        self.feeder_parameters["feederhead_basekV"] = feeder_head_basekv
-
-        self.write_to_json(self.feeder_parameters, "Thermal_violations_comparison")
 
         # Process outputs
         input_dict = {
@@ -879,10 +898,12 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             self.line_violations[key] = [max(vals[0]),vals[1]]
         for key, vals in self.all_line_ldgs_alltps.items():
             self.all_line_ldgs[key] = [max(vals[0]), vals[1]]
+        # print(f"Finished function determine_line_ldgs")
 
     # Use only for LA
     def solve_diff_tps_lines(self):
         # Uses Kwami's LA100 logic
+        # breakpoint()
         self.logger.info("PVsystems: %s",dss.PVsystems.Count())
         self.line_violations_alltps = {}
         self.all_line_ldgs_alltps = {}
@@ -917,6 +938,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                                               f"{list(self.other_load_dss_files.keys())[tp_cnt]}")
             dss.Circuit.SetActiveClass("Line")
             dss.ActiveClass.First()
+
             while True:
                 switch = dss.Properties.Value("switch")
                 line_name = dss.CktElement.Name().split(".")[1].lower()
@@ -1046,6 +1068,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         # may be added.
 
         if len(self.line_violations)>0:
+            # print("Entered line violatiosn correction")
             for key,vals in self.line_violations.items():
                 dss.Lines.Name("{}".format(key))
                 phases = dss.Lines.Phases()
@@ -1112,6 +1135,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         self.write_dss_file(command_string)
         else:
             self.logger.info("This DPV penetration has no line violations")
+        # breakpoint()
         return
 
     def determine_available_xfmr_upgrades(self):
@@ -1353,12 +1377,16 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         return
 
     def correct_xfmr_violations(self):
+        # print("Enter correct_xfmr_violations")
         # This finds a line code which provides a specified safety margin to a line above its maximum observed loading.
         # If a line code is not found or if line code is too overrated one or more parallel lines (num_par_lns-1)
         # may be added.
-
         if len(self.xfmr_violations)>0:
+            # print(len(self.xfmr_violations))
+            # print(self.xfmr_violations.items())
+            # breakpoint()
             for key,vals in self.xfmr_violations.items():
+                # print(f" key{key}, vals{vals}")
                 # Determine which category this DT belongs to
                 # dss.Circuit.SetActiveElement("Transformer.{}".format(key))
                 dss.Transformers.Name(key)
@@ -1400,6 +1428,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                                                                                                           norm_amps,
                                                                                                           vals[1]))
                 num_par_dts = int((vals[0] * self.config["xfmr_safety_margin"]) / (vals[1]*self.config["DT loading limit"])) + 1
+                # print(f"{vals[0]}, {self.config['xfmr_safety_margin']}, {vals[1]}, {self.config['DT loading limit']}")
                 dt_key = "type_" + "{}_".format(phases) + "{}_".format(num_wdgs)
                 for kv_cnt in range(len(wdg_kv_list)):
                     dt_key = dt_key + "{}_".format(wdg_kv_list[kv_cnt])
@@ -1407,7 +1436,10 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                 # Find potential upgrades for this DT. This might be a new higher kVA rated DT in place of the original or
                 #  one or more parallel DTs
                 dt_fnd_flag = 0
+                # starting iteration in library
+                # print("starting iteration in library")
                 if dt_key in self.avail_xfmr_upgrades:
+                    # print(f"iterating over {len(self.avail_xfmr_upgrades[dt_key].items())}")
                     for dt,dt_vals in self.avail_xfmr_upgrades[dt_key].items():
                         if dt!=key:
                             if dt_vals[1][0]>((vals[0]*self.config["xfmr_safety_margin"])/(self.config["line loading limit"])) and dt_vals[1][0]<num_par_dts*norm_amps:
@@ -1428,11 +1460,15 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                                 self.write_dss_file(command_string)
                                 dt_fnd_flag=1
                                 break
+
                 if dt_key not in self.avail_xfmr_upgrades or dt_fnd_flag==0:
+                    # print("Adding parallel (none in library found)")
                     # Add parallel DTs since no suitable (correct ratings or economical) DT
                     # replacement was found
                     curr_time = str(time.time())
                     time_stamp = curr_time.split(".")[0] + "_" + curr_time.split(".")[1]
+                    # print(num_par_dts)
+                    # print(dss.Solution.Converged())
                     for dt_cnt in range(num_par_dts-1):
                         command_string = "New Transformer.{dtn}_upgrade_{tr_cnt}_{cnt}_{tm} phases={phs} windings={wdgs}" \
                                          " %noloadloss={nll} leadlag={ll} ".format(
@@ -1465,6 +1501,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         dss.run_command(command_string)
                         self.dssSolver.Solve()
                         self.write_dss_file(command_string)
+                        # print("End of Adding parallel (none in library found)")
         else:
             self.logger.info("This DPV penetration has no Transformer thermal violations")
         return
@@ -1483,13 +1520,13 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             self.logger.debug("expected_file_name", expected_file_name)
             if expected_file_name in self.thermal_upgrades_files:
                 expected_file_path = os.path.join(self.config["Outputs"],expected_file_name)
-                ##check_redirect(expected_file_path)
+                check_redirect(expected_file_path)
                 # Also append all upgrades in the previous penetration level to the next level
                 with open(os.path.join(self.config["Outputs"], "Thermal_upgrades_pen_{}.dss".format(prev_pen_level)),"r") as datafile:
                     for line in datafile:
                         self.dss_upgrades.append(line)
             elif expected_file_name not in self.thermal_upgrades_files:
-                raise InvalidParameter("Previous upgrades file does not exist, some error is code execution")
+                raise InvalidParameter("Previous upgrades file does not exist, some error in code execution")
 
     def run(self, step, stepMax):
         """Induces and removes a fault as the simulation runs as per user defined settings. 
