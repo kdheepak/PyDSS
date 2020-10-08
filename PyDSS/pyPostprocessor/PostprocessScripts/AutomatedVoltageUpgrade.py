@@ -156,6 +156,9 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
         self.dssSolver = dssSolver
         self.start = time.time()
 
+        # dss.Solution.Convergence(0.01)
+        # print(dss.Solution.Convergence())
+
         self.get_load_pv_mults_LA()
         #self.get_load_mults()
         # reading original objects (before upgrades)
@@ -193,7 +196,9 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
         self.LTC_delay = 45  # in seconds
         self.LTC_band = 2  # deadband in volts
 
-        self.place_new_regulators = True  # flag to determine whether to place new regulators or not
+        # flag to determine whether to place new regulators or not
+        self.place_new_regulators = True  # for 4.8kV feeders
+        # self.place_new_regulators = False  # for 34.5kV networks
 
         # Initialize dss upgrades file
         self.dss_upgrades = [
@@ -240,6 +245,7 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
 
             self.upper_limit = self.config["Final upper limit"]
             self.lower_limit = self.config["Final lower limit"]
+            # breakpoint()
             self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit,
                                                     lower_limit=self.lower_limit)
 
@@ -251,6 +257,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 "Voltage upper threshold": self.upper_limit,
                 "Voltage lower threshold": self.lower_limit,
                 "Number of buses with violations": len(self.buses_with_violations),
+                "Number of buses with overvoltage violations": len(self.buses_with_overvoltage_violations),
+                "Number of buses with undervoltage violations": len(self.buses_with_undervoltage_violations),
                 "Buses at all tps with violations": self.severity_indices[0],
                 "Severity of bus violations": self.severity_indices[1],
                 "Objective function value": self.severity_indices[2],
@@ -278,6 +286,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
             "Voltage upper threshold": self.upper_limit,
             "Voltage lower threshold": self.lower_limit,
             "Number of buses with violations"       :len(self.buses_with_violations),
+            "Number of buses with overvoltage violations": len(self.buses_with_overvoltage_violations),
+            "Number of buses with undervoltage violations": len(self.buses_with_undervoltage_violations),
             "Buses at all tps with violations"      :self.severity_indices[0],
             "Severity of bus violations"            : self.severity_indices[1],
             "Objective function value"              :self.severity_indices[2],
@@ -628,6 +638,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 "Voltage upper threshold": self.upper_limit,
                 "Voltage lower threshold": self.lower_limit,
                 "Number of buses with violations": len(self.buses_with_violations),
+                "Number of buses with overvoltage violations": len(self.buses_with_overvoltage_violations),
+                "Number of buses with undervoltage violations": len(self.buses_with_undervoltage_violations),
                 "Buses at all tps with violations": self.severity_indices[0],
                 "Severity of bus violations": self.severity_indices[1],
                 "Objective function value": self.severity_indices[2],
@@ -657,6 +669,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
             "Voltage upper threshold": self.upper_limit,
             "Voltage lower threshold": self.lower_limit,
             "Number of buses with violations": len(self.buses_with_violations),
+            "Number of buses with overvoltage violations": len(self.buses_with_overvoltage_violations),
+            "Number of buses with undervoltage violations": len(self.buses_with_undervoltage_violations),
             "Buses at all tps with violations": self.severity_indices[0],
             "Severity of bus violations": self.severity_indices[1],
             "Objective function value": self.severity_indices[2],
@@ -1075,6 +1089,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
         severity_counter = 0
         self.max_V_viol = 0
         self.min_V_viol = 2
+        self.buses_with_undervoltage_violations = []
+        self.buses_with_overvoltage_violations = []
         self.buses_with_violations = []
         self.buses_with_violations_pos = {}
         self.nodal_violations_dict = {}
@@ -1123,6 +1139,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 if max(bus_v) > upper_limit:
                     maxv = max(bus_v)
                     maxv_dev = maxv - upper_limit
+                    if b.lower() not in self.buses_with_overvoltage_violations:
+                        self.buses_with_overvoltage_violations.append(b.lower())
                 if min(bus_v) < lower_limit:
                     minv = min(bus_v)
                     minv_dev = upper_limit - minv
@@ -1133,6 +1151,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                     if b.lower() not in self.buses_with_violations:
                         self.buses_with_violations.append(b.lower())
                         self.buses_with_violations_pos[b.lower()] = self.pos_dict[b.lower()]
+                    if b.lower() not in self.buses_with_overvoltage_violations:
+                        self.buses_with_overvoltage_violations.append(b.lower())
                 elif minv_dev > maxv_dev:
                     v_used = minv
                     num_nodes_counter += 1
@@ -1140,6 +1160,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                     if b.lower() not in self.buses_with_violations:
                         self.buses_with_violations.append(b.lower())
                         self.buses_with_violations_pos[b.lower()] = self.pos_dict[b.lower()]
+                    if b.lower() not in self.buses_with_undervoltage_violations:
+                        self.buses_with_undervoltage_violations.append(b.lower())
                 else:
                     v_used = self.config["nominal pu voltage"]
                 if b not in self.nodal_violations_dict:
@@ -1147,6 +1169,7 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 elif b in self.nodal_violations_dict:
                     self.nodal_violations_dict[b.lower()].append(v_used)
         self.severity_indices = [num_nodes_counter, severity_counter, num_nodes_counter * severity_counter]
+        # breakpoint()
         return
 
     # this function checks for voltage violations based on upper and lower limit passed

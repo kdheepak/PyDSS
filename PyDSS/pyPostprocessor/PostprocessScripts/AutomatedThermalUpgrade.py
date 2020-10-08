@@ -121,39 +121,39 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
 
         # Determine available upgrades - either by looping over the existing feeder or by reading an
         #  externally created library
-        # if self.config["Create_upgrades_library"]:
-        #     self.logger.debug("Creating upgrades library from the feeder")
-        #     self.determine_available_line_upgrades()
-        #     self.determine_available_xfmr_upgrades()
-        #     self.logger.debug("Library created")
-        # else:
-        #     self.logger.debug("Reading external upgrades library")
-        #     self.avail_line_upgrades = self.read_available_upgrades("Line_upgrades_library")
-        #     self.avail_xfmr_upgrades = self.read_available_upgrades("Transformer_upgrades_library")
-        #     self.logger.debug("Upgrades library read")
-
-        # this is done separately for transformer and line upgrades library (15Sep2020)
-        if self.config["Create_xfmr_upgrades_library"]:
-            self.logger.info("Creating transformer upgrades library from the feeder")
-            self.determine_available_xfmr_upgrades()
-            self.logger.debug("Xfmr upgrades Library created")
-        else:
-            self.logger.info("Reading external xfmr upgrades library")
-            self.avail_xfmr_upgrades = self.read_available_upgrades("Transformer_upgrades_library")
-            self.logger.debug("Xfmr Upgrades library read")
-
-        if self.config["Create_line_upgrades_library"]:
-            self.logger.info("Creating line upgrades library from the feeder")
+        if self.config["Create_upgrades_library"]:
+            self.logger.debug("Creating upgrades library from the feeder")
             self.determine_available_line_upgrades()
-            self.logger.debug("Line Upgrades Library created")
+            self.determine_available_xfmr_upgrades()
+            self.logger.debug("Library created")
         else:
-            self.logger.info("Reading external line upgrades library")
+            self.logger.debug("Reading external upgrades library")
             self.avail_line_upgrades = self.read_available_upgrades("Line_upgrades_library")
-            self.logger.debug("Line Upgrades library read")
+            self.avail_xfmr_upgrades = self.read_available_upgrades("Transformer_upgrades_library")
+            self.logger.debug("Upgrades library read")
 
-        # Determine initial loadings
-        self.determine_line_ldgs()
-        self.determine_xfmr_ldgs()
+        # # this is done separately for transformer and line upgrades library (15Sep2020)
+        # if self.config["Create_xfmr_upgrades_library"]:
+        #     self.logger.info("Creating transformer upgrades library from the feeder")
+        #     self.determine_available_xfmr_upgrades()
+        #     self.logger.debug("Xfmr upgrades Library created")
+        # else:
+        #     self.logger.info("Reading external xfmr upgrades library")
+        #     self.avail_xfmr_upgrades = self.read_available_upgrades("Transformer_upgrades_library")
+        #     self.logger.debug("Xfmr Upgrades library read")
+        #
+        # if self.config["Create_line_upgrades_library"]:
+        #     self.logger.info("Creating line upgrades library from the feeder")
+        #     self.determine_available_line_upgrades()
+        #     self.logger.debug("Line Upgrades Library created")
+        # else:
+        #     self.logger.info("Reading external line upgrades library")
+        #     self.avail_line_upgrades = self.read_available_upgrades("Line_upgrades_library")
+        #     self.logger.debug("Line Upgrades library read")
+
+        # Determine initial loadings based on defined limit from config
+        self.determine_line_ldgs(defined_loading_limit=self.config["line loading limit"])
+        self.determine_xfmr_ldgs(defined_loading_limit=self.config["DT loading limit"])
 
         self.logger.info("Voltages before upgrades max=%s min=%s", max(dss.Circuit.AllBusMagPu()), min(dss.Circuit.AllBusMagPu()))
         self.logger.info("Substation power before upgrades: %s", dss.Circuit.TotalPower())
@@ -175,19 +175,51 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.write_to_json(self.equip_ldgs, "Initial_equipment_loadings_pen_{}".format(self.pen_level))
 
         # Store voltage violations before any upgrades - max, min and number
-        self.V_upper_thresh = 1.05
-        self.V_lower_thresh = 0.95
+        self.V_upper_thresh_rangeA = 1.05
+        self.V_lower_thresh_rangeA = 0.95
+        self.V_upper_thresh_rangeB = 1.0583
+        self.V_lower_thresh_rangeB = 0.9167
         self.get_nodal_violations()
+
+        # this function is from voltage upgrades code to determine count of voltage violations
+        # RANGE A
+        self.check_voltage_violations_multi_tps(upper_limit=self.V_upper_thresh_rangeA,
+                                           lower_limit=self.V_lower_thresh_rangeA)
         # breakpoint()
+        # recompute line and xfmr loading based on additional limit needed for LA (100x)
+        additional_defined_limit = 1
+        self.determine_line_ldgs(defined_loading_limit=additional_defined_limit)
+        self.determine_xfmr_ldgs(defined_loading_limit=additional_defined_limit)
+
         self.feeder_parameters["initial_violations"] = {
-            "Number of lines with violations": len(self.line_violations),
-            "Number of xfmrs with violations": len(self.xfmr_violations),
+            "Maximum voltage on any bus": self.max_V_viol,
+            "Minimum voltage on any bus": self.min_V_viol,
+            "Number of buses outside ANSI A limits": len(self.buses_with_violations),
+            "Number of overvoltage violations buses outside Range A limits": len(self.buses_with_overvoltage_violations),  # new
+            "Number of undervoltage violations buses outside Range A limits": len(self.buses_with_undervoltage_violations),  # new
+
             "Max line loading observed": max(self.orig_line_ldg_lst),
             "Max xfmr loading observed": max(self.orig_xfmr_ldg_lst),
-            "Maximum voltage on any bus": self.max_V_viol,
-            "Minimum voltage on any bus":self.min_V_viol,
-            "Number of buses outside ANSI A limits":len(self.cust_viol),
+            "Number of lines with violations (100x)": len(self.line_violations),  # new
+            "Number of xfmrs with violations (100x)": len(self.xfmr_violations),  # new
         }
+
+        # this function is from voltage upgrades code to determine count of voltage violations
+        # RANGE B
+        self.check_voltage_violations_multi_tps(upper_limit=self.V_upper_thresh_rangeB,
+                                           lower_limit=self.V_lower_thresh_rangeB)
+
+        self.feeder_parameters["initial_violations"]["Number of buses outside Range B limits"] = len(self.buses_with_violations)  # new
+        self.feeder_parameters["initial_violations"]["Number of overvoltage violations buses outside Range B limits"] = len(self.buses_with_overvoltage_violations)  # new
+        self.feeder_parameters["initial_violations"]["Number of undervoltage violations buses outside Range B limits"] = len(self.buses_with_undervoltage_violations)  # new
+
+        # recompute line and xfmr loading based on limit defined in config - to store, as well as used in analysis
+        self.determine_line_ldgs(defined_loading_limit=self.config["line loading limit"])
+        self.determine_xfmr_ldgs(defined_loading_limit=self.config["DT loading limit"])
+        self.feeder_parameters["initial_violations"]["Number of lines with violations"] = len(self.line_violations)
+        self.feeder_parameters["initial_violations"]["Number of xfmrs with violations"] = len(self.xfmr_violations)
+
+        # breakpoint()
 
         if self.config["Create_upgrade_plots"]:
             self.create_op_plots()
@@ -205,7 +237,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.Line_trial_counter = 0
         self.max_upgrade_iteration = min(20, len(self.xfmr_violations) + len(self.line_violations))
         while (len(self.xfmr_violations) > 0 or len(self.line_violations) > 0) \
-                and self.Line_trial_counter < self.max_upgrade_iteration:
+                and (self.Line_trial_counter < self.max_upgrade_iteration):
             prev_xfmr = len(self.xfmr_violations)
             prev_line = len(self.line_violations)
             print(len(self.xfmr_violations))
@@ -214,7 +246,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             self.dssSolver.Solve()
             print(dss.Solution.Converged())
             # breakpoint()
-            self.determine_line_ldgs()
+            self.determine_line_ldgs(defined_loading_limit=self.config["line loading limit"])
             self.dssSolver.Solve()
             print(dss.Solution.Converged())
             # print("After determine_line_ldgs")
@@ -228,7 +260,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             # print("After correct_line_violations")
             # print(len(self.xfmr_violations))
             # print(self.line_violations)
-            self.determine_xfmr_ldgs()
+            self.determine_xfmr_ldgs(defined_loading_limit=self.config["DT loading limit"])
             # print("After determine_xfmr_ldgs")
             if len(self.xfmr_violations) > prev_xfmr:
                 raise Exception(f"Xfmr violations increased from {prev_xfmr} to {len(self.xfmr_violations)} "
@@ -237,6 +269,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             # print(self.line_violations)
             if len(self.xfmr_violations) > 0:
                 self.correct_xfmr_violations()
+                # breakpoint()
             # print("After correct_xfmr_violations")
             # print(len(self.xfmr_violations))
             # print(self.line_violations)
@@ -269,9 +302,9 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         check_redirect(upgrades_file)
         self.dssSolver.Solve()
 
-        # Get final loadings
-        self.determine_xfmr_ldgs()
-        self.determine_line_ldgs()
+        # Get final loadings based on limit mentioned in config
+        self.determine_xfmr_ldgs(defined_loading_limit=self.config["DT loading limit"])
+        self.determine_line_ldgs(defined_loading_limit=self.config["line loading limit"])
 
         self.final_line_ldg_lst = []
         self.final_xfmr_ldg_lst = []
@@ -300,15 +333,44 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
 
         # final computation of violations
         self.get_nodal_violations()
+
+        # this function is from voltage upgrades code to determine count of voltage violations
+        # RANGE A
+        self.check_voltage_violations_multi_tps(upper_limit=self.V_upper_thresh_rangeA,
+                                                lower_limit=self.V_lower_thresh_rangeA)
+
+        # recompute line and xfmr loading based on additional limit needed for LA (100x)
+        self.determine_line_ldgs(defined_loading_limit=additional_defined_limit)
+        self.determine_xfmr_ldgs(defined_loading_limit=additional_defined_limit)
+
         self.feeder_parameters["final_violations"] = {
-            "Number of lines with violations": len(self.line_violations),
-            "Number of xfmrs with violations": len(self.xfmr_violations),
-            "Max line loading observed": max(self.final_line_ldg_lst),
-            "Max xfmr loading observed": max(self.final_xfmr_ldg_lst),
             "Maximum voltage on any bus": self.max_V_viol,
             "Minimum voltage on any bus": self.min_V_viol,
-            "Number of buses outside ANSI A limits": len(self.cust_viol),
+            "Number of buses outside ANSI A limits": len(self.buses_with_violations),
+            "Number of overvoltage violations buses outside Range A limits": len(self.buses_with_overvoltage_violations),  # new
+            "Number of undervoltage violations buses outside Range A limits": len(self.buses_with_undervoltage_violations),  # new
+
+            "Max line loading observed": max(self.final_line_ldg_lst),
+            "Max xfmr loading observed": max(self.final_xfmr_ldg_lst),
+            "Number of lines with violations (100x)": len(self.line_violations),  # new
+            "Number of xfmrs with violations (100x)": len(self.xfmr_violations),  # new
         }
+
+        # this function is from voltage upgrades code to determine count of voltage violations
+        # RANGE B
+        self.check_voltage_violations_multi_tps(upper_limit=self.V_upper_thresh_rangeB,
+                                           lower_limit=self.V_lower_thresh_rangeB)
+
+        self.feeder_parameters["final_violations"]["Number of buses outside Range B limits"] = len(self.buses_with_violations)  # new
+        self.feeder_parameters["final_violations"]["Number of overvoltage violations buses outside Range B limits"] = len(self.buses_with_overvoltage_violations)  # new
+        self.feeder_parameters["final_violations"]["Number of undervoltage violations buses outside Range B limits"] = len(self.buses_with_undervoltage_violations)  # new
+
+        # recompute line and xfmr loading based on limit defined in config - to store
+        self.determine_line_ldgs(defined_loading_limit=self.config["line loading limit"])
+        self.determine_xfmr_ldgs(defined_loading_limit=self.config["DT loading limit"])
+        self.feeder_parameters["final_violations"]["Number of lines with violations"] = len(self.line_violations)
+        self.feeder_parameters["final_violations"]["Number of xfmrs with violations"] = len(self.xfmr_violations)
+
         self.feeder_parameters["Simulation time (seconds)"] = end - start
         self.feeder_parameters["Upgrade status"] = self.upgrade_status
         self.feeder_parameters["feederhead_name"] = feeder_head_name
@@ -392,8 +454,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             for key, dss_paths in self.other_pv_dss_files.items():
                 self.read_pv_files_LA(key, dss_paths)
 
-    def read_load_files_LA(self,key_paths,dss_path):
-
+    def read_load_files_LA(self, key_paths, dss_path):
         # Add all load kW values
         temp_dict = {}
         for path_f in dss_path:
@@ -487,6 +548,99 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         data = json.load(f)
         return data
 
+    # This function is only for LA - copied from voltage upgrades script
+    # used here to determine count of overvoltage and undervoltage violations
+    def check_voltage_violations_multi_tps(self, upper_limit, lower_limit):
+        self.all_bus_names = dss.Circuit.AllBusNames()
+        # TODO: This objective currently gives more weightage if same node has violations at more than 1 time point
+        num_nodes_counter = 0
+        severity_counter = 0
+        self.max_V_viol = 0
+        self.min_V_viol = 2
+        self.buses_with_undervoltage_violations = []
+        self.buses_with_overvoltage_violations = []
+        self.buses_with_violations = []
+        self.buses_with_violations_pos = {}
+        self.nodal_violations_dict = {}
+        # If multiple load files are being used, the 'tps_to_test property is not used, else if a single load file is
+        # used use the 'tps to test' input
+        for tp_cnt in range(len(self.other_load_dss_files)):
+            # Apply correct pmpp values to all PV systems
+            if dss.PVsystems.Count() > 0:
+                dss.PVsystems.First()
+                while True:
+                    pv_name = dss.PVsystems.Name().split(".")[0].lower()
+                    if pv_name not in self.orig_pvs:
+                        print("PV system not found, quitting...")
+                        quit()
+                    new_pmpp = self.orig_pvs[pv_name][tp_cnt]
+                    dss.run_command(f"Edit PVsystem.{pv_name} irradiance={new_pmpp}")
+                    if not dss.PVsystems.Next() > 0:
+                        break
+            # Apply correct kW value to all loads
+            if dss.Loads.Count() > 0:
+                dss.Loads.First()
+                while True:
+                    load_name = dss.Loads.Name().split(".")[0].lower()
+                    if load_name not in self.orig_loads:
+                        print("Load not found, quitting...")
+                        quit()
+                    new_kw = self.orig_loads[load_name][tp_cnt]
+                    dss.Loads.kW(new_kw)
+                    if not dss.Loads.Next() > 0:
+                        break
+            self.dssSolver.Solve()
+            if not dss.Solution.Converged():
+                raise OpenDssConvergenceError("OpenDSS solution did not converge")
+            for b in self.all_bus_names:
+                dss.Circuit.SetActiveBus(b)
+                bus_v = dss.Bus.puVmagAngle()[::2]
+                # Select that bus voltage of the three phases which is outside bounds the most,
+                #  else if everything is within bounds use nominal pu voltage.
+                maxv_dev = 0
+                minv_dev = 0
+                if max(bus_v) > self.max_V_viol:
+                    self.max_V_viol = max(bus_v)
+                    self.busvmax = b
+                if min(bus_v) < self.min_V_viol:
+                    self.min_V_viol = min(bus_v)
+                if max(bus_v) > upper_limit:
+                    maxv = max(bus_v)
+                    maxv_dev = maxv - upper_limit
+                    if b.lower() not in self.buses_with_overvoltage_violations:
+                        self.buses_with_overvoltage_violations.append(b.lower())
+                if min(bus_v) < lower_limit:
+                    minv = min(bus_v)
+                    minv_dev = upper_limit - minv
+                if maxv_dev > minv_dev:
+                    v_used = maxv
+                    num_nodes_counter += 1
+                    severity_counter += maxv_dev
+                    if b.lower() not in self.buses_with_violations:
+                        self.buses_with_violations.append(b.lower())
+                        # self.buses_with_violations_pos[b.lower()] = self.pos_dict[b.lower()]
+                    if b.lower() not in self.buses_with_overvoltage_violations:
+                        self.buses_with_overvoltage_violations.append(b.lower())
+                elif minv_dev > maxv_dev:
+                    v_used = minv
+                    num_nodes_counter += 1
+                    severity_counter += minv_dev
+                    if b.lower() not in self.buses_with_violations:
+                        self.buses_with_violations.append(b.lower())
+                        # self.buses_with_violations_pos[b.lower()] = self.pos_dict[b.lower()]
+                    if b.lower() not in self.buses_with_undervoltage_violations:
+                        self.buses_with_undervoltage_violations.append(b.lower())
+                else:
+                    # v_used = self.config["nominal pu voltage"]
+                    v_used = 1
+                if b not in self.nodal_violations_dict:
+                    self.nodal_violations_dict[b.lower()] = [v_used]
+                elif b in self.nodal_violations_dict:
+                    self.nodal_violations_dict[b.lower()].append(v_used)
+        self.severity_indices = [num_nodes_counter, severity_counter, num_nodes_counter * severity_counter]
+        # breakpoint()
+        return
+
     # Use only for LA
     def get_nodal_violations(self):
         # Get the maximum and minimum voltages and number of buses with violations
@@ -494,6 +648,10 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.max_V_viol     = 0
         self.min_V_viol     = 2
         self.cust_viol      = []
+        self.cust_viol_rangeB = []
+        list_min_bus_v = []
+        list_max_bus_v = []
+        # breakpoint()
         for tp_cnt in range(len(self.other_load_dss_files)):
             # Apply correct pmpp values to all PV systems
             if dss.PVsystems.Count() > 0:
@@ -523,17 +681,28 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             if not dss.Solution.Converged():
                 raise OpenDssConvergenceError(f"OpenDSS solution did not converge for timepoint "
                                               f"{list(self.other_load_dss_files.keys())[tp_cnt]}")
+            # get list of min and max bus voltages
             for b in self.buses:
                 dss.Circuit.SetActiveBus(b)
                 bus_v = dss.Bus.puVmagAngle()[::2]
+                list_max_bus_v.append(max(bus_v))
+                list_min_bus_v.append(min(bus_v))
                 if max(bus_v) > self.max_V_viol:
                     self.max_V_viol = max(bus_v)
                 if min(bus_v) < self.min_V_viol:
                     self.min_V_viol = min(bus_v)
-                if max(bus_v)>self.V_upper_thresh and b not in self.cust_viol:
+                if max(bus_v)>self.V_upper_thresh_rangeA and b not in self.cust_viol:
                     self.cust_viol.append(b)
-                if min(bus_v)<self.V_lower_thresh and b not in self.cust_viol:
+                if min(bus_v)<self.V_lower_thresh_rangeA and b not in self.cust_viol:
                     self.cust_viol.append(b)
+            # breakpoint()
+            # self.overvoltage_violations_rangeA = [i for i in list_max_bus_v if i > self.V_upper_thresh_rangeA]
+            # self.undervoltage_violations_rangeA = [i for i in list_min_bus_v if i < self.V_lower_thresh_rangeA]
+            #
+            # self.overvoltage_violations_rangeB = [i for i in list_max_bus_v if i > self.V_upper_thresh_rangeB]
+            # self.undervoltage_violations_rangeB = [i for i in list_min_bus_v if i < self.V_lower_thresh_rangeB]
+
+        # breakpoint()
         return
 
     def get_nodal_violations_orig(self):
@@ -582,9 +751,9 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         self.max_V_viol = max(bus_v)
                     if min(bus_v) < self.min_V_viol:
                         self.min_V_viol = min(bus_v)
-                    if max(bus_v)>self.V_upper_thresh and b not in self.cust_viol:
+                    if max(bus_v)>self.V_upper_thresh_rangeA and b not in self.cust_viol:
                         self.cust_viol.append(b)
-                    if min(bus_v)<self.V_lower_thresh and b not in self.cust_viol:
+                    if min(bus_v)<self.V_lower_thresh_rangeA and b not in self.cust_viol:
                         self.cust_viol.append(b)
         elif len(self.other_load_dss_files)==0:
             for tp_cnt in range(len(self.config["tps_to_test"])):
@@ -608,9 +777,9 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         self.max_V_viol = max(bus_v)
                     if min(bus_v) < self.min_V_viol:
                         self.min_V_viol = min(bus_v)
-                    if max(bus_v)>self.V_upper_thresh and b not in self.cust_viol:
+                    if max(bus_v)>self.V_upper_thresh_rangeA and b not in self.cust_viol:
                         self.cust_viol.append(b)
-                    if min(bus_v)<self.V_lower_thresh and b not in self.cust_viol:
+                    if min(bus_v)<self.V_lower_thresh_rangeA and b not in self.cust_viol:
                         self.cust_viol.append(b)
         return
 
@@ -890,18 +1059,20 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             if not dss.Lines.Next()>0:
                 break
 
-    def determine_line_ldgs(self):
+    def determine_line_ldgs(self, defined_loading_limit=None):
         self.line_violations = {}
         self.all_line_ldgs = {}
-        self.solve_diff_tps_lines()
+        self.solve_diff_tps_lines(defined_line_loading_limit=defined_loading_limit)
+        # breakpoint()
         for key,vals in self.line_violations_alltps.items():
             self.line_violations[key] = [max(vals[0]),vals[1]]
         for key, vals in self.all_line_ldgs_alltps.items():
             self.all_line_ldgs[key] = [max(vals[0]), vals[1]]
+        # breakpoint()
         # print(f"Finished function determine_line_ldgs")
 
     # Use only for LA
-    def solve_diff_tps_lines(self):
+    def solve_diff_tps_lines(self, defined_line_loading_limit=None):
         # Uses Kwami's LA100 logic
         # breakpoint()
         self.logger.info("PVsystems: %s",dss.PVsystems.Count())
@@ -952,7 +1123,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         self.all_line_ldgs_alltps[line_name] = [[max(line_current)], line_limit]
                     elif line_name in self.all_line_ldgs_alltps:
                         self.all_line_ldgs_alltps[line_name][0].append(max(line_current))
-                if ldg > self.config["line loading limit"] and switch == "False":  # and switch==False:
+                if ldg > defined_line_loading_limit and switch == "False":  # and switch==False:
                     if line_name not in self.line_violations_alltps:
                         self.line_violations_alltps[line_name] = [[max(line_current)], line_limit]
                     elif line_name in self.line_violations_alltps:
@@ -1199,19 +1370,19 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                 break
         return
 
-    def determine_xfmr_ldgs(self):
+    def determine_xfmr_ldgs(self, defined_loading_limit=None):
         # TODO: LA100 team please correct the logic used for determining DT loadings. This is the same logic Nicolas
         # TODO: used for the SETO project. This may break down for some DT configurations such as 3 wdg transformers
         self.xfmr_violations = {}
         self.all_xfmr_ldgs = {}
-        self.determine_xfmr_ldgs_alltps()
+        self.determine_xfmr_ldgs_alltps(defined_loading_limit=defined_loading_limit)
         for key,vals in self.xfmr_violations_alltps.items():
             self.xfmr_violations[key] = [max(vals[0]),vals[1]]
         for key,vals in self.all_xfmr_ldgs_alltps.items():
             self.all_xfmr_ldgs[key] = [max(vals[0]),vals[1]]
 
     # Use only for LA
-    def determine_xfmr_ldgs_alltps(self):
+    def determine_xfmr_ldgs_alltps(self, defined_loading_limit=None):
         self.xfmr_violations_alltps = {}
         self.all_xfmr_ldgs_alltps = {}
         for tp_cnt in range(len(self.other_load_dss_files)):
@@ -1261,7 +1432,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                     self.all_xfmr_ldgs_alltps[xfmr_name] = [[max(xfmr_current)], xfmr_limit]
                 elif xfmr_name in self.all_xfmr_ldgs_alltps:
                     self.all_xfmr_ldgs_alltps[xfmr_name][0].append(max(xfmr_current))
-                if ldg > self.config["DT loading limit"]:
+                if ldg > defined_loading_limit:
                     if xfmr_name not in self.xfmr_violations_alltps:
                         self.xfmr_violations_alltps[xfmr_name] = [[max(xfmr_current)], xfmr_limit]
                     elif xfmr_name in self.xfmr_violations_alltps:
