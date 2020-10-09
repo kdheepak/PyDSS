@@ -2,6 +2,7 @@
 # Akshay Kumar Jain; Akshay.Jain@nrel.gov
 
 import os
+import re
 import matplotlib.pyplot as plt
 import opendssdirect as dss
 import networkx as nx
@@ -318,6 +319,7 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 if dss.Capacitors.Count() > 0:
                     self.logger.info("Cap bank settings sweep, if capacitors are present.")
                     self.get_capacitor_state()
+                    # breakpoint()
                     self.correct_cap_bank_settings()
                     if self.config["create topology plots"]:
                         self.plot_violations()
@@ -1083,7 +1085,7 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
 
 
     # This function is only for LA
-    def check_voltage_violations_multi_tps(self, upper_limit, lower_limit):
+    def check_voltage_violations_multi_tps(self, upper_limit, lower_limit, raise_exception=True):
         # TODO: This objective currently gives more weightage if same node has violations at more than 1 time point
         num_nodes_counter = 0
         severity_counter = 0
@@ -1123,7 +1125,14 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                         break
             self.dssSolver.Solve()
             if not dss.Solution.Converged():
-                raise OpenDssConvergenceError("OpenDSS solution did not converge")
+                # breakpoint()
+                self.logger.info("\n\nUpgrade Solutions before Convergence Error: ")
+                self.logger.info(self.dss_upgrades)
+                if raise_exception:
+                    raise OpenDssConvergenceError("OpenDSS solution did not converge")
+                    return False
+                else:
+                    return False
             for b in self.all_bus_names:
                 dss.Circuit.SetActiveBus(b)
                 bus_v = dss.Bus.puVmagAngle()[::2]
@@ -1170,7 +1179,7 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                     self.nodal_violations_dict[b.lower()].append(v_used)
         self.severity_indices = [num_nodes_counter, severity_counter, num_nodes_counter * severity_counter]
         # breakpoint()
-        return
+        return True
 
     # this function checks for voltage violations based on upper and lower limit passed
     def check_voltage_violations_multi_tps_orig(self, upper_limit, lower_limit):
@@ -1384,7 +1393,23 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                 cap_on_settings_check[cap_name] = self.capON
                 dss.run_command(control_command)
                 self.dssSolver.Solve()
+                pass_flag = True
+                pass_flag = self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit,
+                                                                    lower_limit=self.lower_limit, raise_exception=False)
+                # If pass_flag returned false, means it had convergence error
+                if not pass_flag:
+                    # change command
+                    new_control_command = self.edit_capacitor_settings_for_convergence(control_command)
+                    print(new_control_command)
+                    dss.run_command(new_control_command)
+                    self.dssSolver.Solve()
+                    self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit,
+                                                                        lower_limit=self.lower_limit,
+                                                                        raise_exception=True)
+                    control_command = new_control_command
+
                 self.write_dss_file(control_command)
+                # breakpoint()
                 if not dss.CapControls.Next() > 0:
                     break
         # if there are caps without cap control add a cap control
@@ -1424,6 +1449,22 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                     dss.run_command(control_command)
                     cap_on_settings_check[cap_name] = self.capON
                     self.dssSolver.Solve()
+                    pass_flag = True
+                    pass_flag = self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit,
+                                                                        lower_limit=self.lower_limit,
+                                                                        raise_exception=False)
+                    # If pass_flag returned false, means it had convergence error
+                    if not pass_flag:
+                        # change command
+                        new_control_command = self.edit_capacitor_settings_for_convergence(control_command)
+                        print(new_control_command)
+                        dss.run_command(new_control_command)
+                        self.dssSolver.Solve()
+                        self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit,
+                                                                lower_limit=self.lower_limit,
+                                                                raise_exception=True)
+                        control_command = new_control_command
+
                     self.write_dss_file(control_command)
                 dss.Circuit.SetActiveElement("Capacitor." + cap_name)
                 if not dss.Capacitors.Next() > 0:
@@ -1441,10 +1482,40 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
                     self.logger.info("Settings for cap bank %s not implemented", cap_name)
                 if not dss.CapControls.Next() > 0:
                     break
+        # breakpoint()
+        if not dss.Solution.Converged():
+            # breakpoint()
+            self.logger.info("\n\nUpgrade Solutions before Convergence Error: ")
+            self.logger.info(self.dss_upgrades)
+            raise OpenDssConvergenceError("OpenDSS solution did not converge")
 
         # self.get_nodal_violations()
-        self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit,
-                                                lower_limit=self.lower_limit)
+        # breakpoint()
+
+        self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit, lower_limit=self.lower_limit)
+
+    def edit_capacitor_settings_for_convergence(self, control_command):
+        new_deadtime = 50
+        new_delay = 50
+        self.capON = round((self.config["nominal_voltage"] - (self.config["Cap sweep voltage gap"]+1) / 2), 1)
+        self.capOFF = round((self.config["nominal_voltage"] + (self.config["Cap sweep voltage gap"]+1) / 2), 1)
+        self.logger.info("Changed Initial On and Off Cap settings to avoid convergence issues ")
+
+        new_capON = self.capON
+        new_capOFF = self.capOFF
+
+        new_control_command = control_command
+        # self.remove_line_from_dss_file(control_command)  # remove command that caused convergence issue
+        control_command = control_command.replace('New', 'Edit')
+        control_command = re.sub("enabled=True", "enabled=False", control_command)
+        dss.run_command(control_command)  # disable and run previous control command
+
+        new_control_command = re.sub("DeadTime=\d+", 'DeadTime=' + str(new_deadtime), new_control_command)
+        new_control_command = re.sub("Delay=\d+", 'Delay=' + str(new_delay), new_control_command)
+        new_control_command = re.sub("ONsetting=\d+\.\d+", 'ONsetting=' + str(new_capON), new_control_command)
+        new_control_command = re.sub("OFFsetting=\d+\.\d+", 'OFFsetting=' + str(new_capOFF), new_control_command)
+        return new_control_command
+
 
     def get_viols_with_initial_cap_settings(self):
         if len(self.cap_initial_settings) > 0:
@@ -1478,14 +1549,16 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
             dss.CapControls.First()
             while True:
                 cc_name = dss.CapControls.Name()
-                dss.run_command("Edit CapControl.{cc} ONsetting={o} OFFsetting={of}".format(
+                control_command = "Edit CapControl.{cc} ONsetting={o} OFFsetting={of}".format(
                     cc=cc_name,
                     o=self.cap_on_setting,
                     of=self.cap_off_setting
-                ))
+                )
+                dss.run_command(control_command)
                 self.dssSolver.Solve()
                 if not dss.CapControls.Next() > 0:
                     break
+            # breakpoint()
             self.check_voltage_violations_multi_tps(upper_limit=self.upper_limit,
                                                     lower_limit=self.lower_limit)
             self.cap_sweep_res_dict[key] = self.severity_indices[2]
@@ -1555,6 +1628,10 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
 
     def write_dss_file(self, device_command):
         self.dss_upgrades.append(device_command + "\n")
+        return
+
+    def remove_line_from_dss_file(self, device_command):
+        self.dss_upgrades.remove(device_command + "\n")
         return
 
     def write_upgrades_to_file(self):
