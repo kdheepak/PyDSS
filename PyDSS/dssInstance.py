@@ -60,7 +60,6 @@ class OpenDSS:
             'dssFiles': os.path.join(rootPath, params['Project']['Active Project'], 'DSSfiles'),
             'dssFilePath': os.path.join(rootPath, params['Project']['Active Project'], 'DSSfiles', params['Project']['DSS File']),
         }
-
         if params['Project']['DSS File Absolute Path']:
             self._dssPath['dssFilePath'] = params['Project']['DSS File']
         else:
@@ -126,6 +125,7 @@ class OpenDSS:
         pyCtrlReader = pcr(self._dssPath['pyControllers'])
         ControllerList = pyCtrlReader.pyControllers
         if ControllerList is not None:
+            # breakpoint()
             self._CreateControllers(ControllerList)
 
         if params['Plots']['Create dynamic plots']:
@@ -213,13 +213,12 @@ class OpenDSS:
         return
 
     def _UpdateControllers(self, Priority, Time, UpdateResults):
-        error = 0
-
+        maxError = 0.0
         for controller in self._pyControls.values():
-            error += controller.Update(Priority, Time, UpdateResults)
-            if Priority == 0:
-                pass
-        return abs(error) < self._Options['Project']['Error tolerance'], error
+            error = abs(controller.Update(Priority, Time, UpdateResults))
+            if error > maxError:
+                maxError = error
+        return maxError < self._Options['Project']['Error tolerance'], maxError
 
     def _CreateBusObjects(self):
         BusNames = self._dssCircuit.AllBusNames()
@@ -241,7 +240,6 @@ class OpenDSS:
             self._dssInstance.Circuit.SetActiveElement(ElmName)
             self._dssObjectsByClass[Class + 's'][ElmName] = create_dss_element(Class, Name, self._dssInstance)
             self._dssObjects[ElmName] = self._dssObjectsByClass[Class + 's'][ElmName]
-
         for ObjName in self._dssObjects.keys():
             Class = ObjName.split('.')[0] + 's'
             if Class not in self._dssObjectsByClass:

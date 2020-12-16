@@ -22,7 +22,8 @@ def GetSolver(SimulationSettings ,dssInstance):
         else:
             pyLogger.error('Invalid solver mode chosen')
             return -1
-    except:
+    except Exception as error:
+        raise error
         pyLogger.error('Incorrect simulation type passed to the function.')
         return -1
 

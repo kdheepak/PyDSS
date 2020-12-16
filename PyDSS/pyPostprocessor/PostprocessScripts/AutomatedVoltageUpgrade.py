@@ -198,8 +198,8 @@ class AutomatedVoltageUpgrade(AbstractPostprocess):
         self.LTC_band = 2  # deadband in volts
 
         # flag to determine whether to place new regulators or not
-        self.place_new_regulators = True  # for 4.8kV feeders
-        # self.place_new_regulators = False  # for 34.5kV networks
+        # self.place_new_regulators = True  # for 4.8kV feeders
+        self.place_new_regulators = False  # for 34.5kV networks
 
         # Initialize dss upgrades file
         self.dss_upgrades = [

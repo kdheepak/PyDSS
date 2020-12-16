@@ -87,6 +87,8 @@ class postprocess_voltage_upgrades():
                     # if original controller type was current, new controller (voltage type) is said to be added
                     elif self.orig_capcontrols[ctrl_name]["control_type"].lower().startswith("current"):
                         self.final_cap_upgrades["ctrl_added"] = 1
+                    elif self.orig_capcontrols[ctrl_name]["control_type"].lower().startswith("time"):
+                        self.final_cap_upgrades["ctrl_added"] = 1
                 # if there are new controllers
                 elif ctrl_name in new_addition:
                     self.final_cap_upgrades["ctrl_added"] = 1

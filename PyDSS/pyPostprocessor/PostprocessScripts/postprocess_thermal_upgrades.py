@@ -34,6 +34,9 @@ class postprocess_thermal_upgrades():
         self.orig_lines = self.Settings["orig_lines"]
         self.new_xfmrs = self.Settings["new_xfmrs"]
         self.orig_xfmrs = self.Settings["orig_xfmrs"]
+        self.orig_lc_parameters = self.Settings["orig_lc_parameters"]
+        # self.orig_line_parameters = self.Settings["orig_line_parameters"]
+        # self.orig_DT_parameters = self.Settings["orig_DT_parameters"]  # TODO
         dss.Vsources.First()
         self.source = dss.CktElement.BusNames()[0].split(".")[0]
         if self.Settings["Create_plots"]:
@@ -52,11 +55,11 @@ class postprocess_thermal_upgrades():
     def get_orig_line_DT_params(self):
         self.orig_line_parameters = {}
         self.orig_DT_parameters = {}
-        self.orig_lc_parameters = {}
-        f = open(os.path.join(self.Settings["Outputs"], "Original_linecodes_parameters.json"), "r")
-        data = json.load(f)
-        for lc, params in data.items():
-            self.orig_lc_parameters[lc.lower()] = params
+        # self.orig_lc_parameters = {}
+        # f = open(os.path.join(self.Settings["Outputs"], "Original_linecodes_parameters.json"), "r")
+        # data = json.load(f)
+        # for lc, params in data.items():
+        #     self.orig_lc_parameters[lc.lower()] = params
         f = open(os.path.join(self.Settings["Outputs"],"Original_line_parameters.json"),"r")
         data = json.load(f)
         for line,params in data.items():
@@ -73,6 +76,8 @@ class postprocess_thermal_upgrades():
         data = json.load(f)
         for xfmr, params in data.items():
             self.orig_DT_parameters["transformer."+xfmr.lower()] = params
+        # breakpoint()
+        print('After breakpoint')
 
     def process_thermal_upgrades(self):
         for self.pen_level in range(self.init_pen, self.end_pen + 1, self.pen_step):
@@ -121,7 +126,6 @@ class postprocess_thermal_upgrades():
             if self.Settings["Create_plots"]:
                 self.create_edge_node_dicts()
                 self.plot_feeder()
-
 
     def write_to_json(self, dict, file_name):
         with open(os.path.join(self.Settings["Outputs"],"{}.json".format(file_name)), "w") as fp:
