@@ -195,7 +195,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         # RANGE A
         self.check_voltage_violations_multi_tps(upper_limit=self.V_upper_thresh_rangeA,
                                            lower_limit=self.V_lower_thresh_rangeA)
-        # breakpoint()
         # recompute line and xfmr loading based on additional limit needed for LA (100x)
         additional_defined_limit = 1
         self.determine_line_ldgs(defined_loading_limit=additional_defined_limit)
@@ -233,7 +232,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.feeder_parameters["initial_violations"]["Number of lines with violations"] = len(self.line_violations)
         self.feeder_parameters["initial_violations"]["Number of xfmrs with violations"] = len(self.xfmr_violations)
 
-        # breakpoint()
 
         if self.config["Create_upgrade_plots"]:
             self.create_op_plots()
@@ -268,7 +266,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             self.logger.info(f"Number of xfmr violations: {len(self.xfmr_violations)}")
 
             if len(self.xfmr_violations) > prev_xfmr:
-                # breakpoint()
                 print(self.xfmr_violations)
                 self.logger.info("Write upgrades till this step in debug_upgrades.dss")
                 self.write_dat_file(output_path=os.path.join(self.config["Outputs"], "debug_upgrades.dss"))
@@ -687,7 +684,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                 elif b in self.nodal_violations_dict:
                     self.nodal_violations_dict[b.lower()].append(v_used)
         self.severity_indices = [num_nodes_counter, severity_counter, num_nodes_counter * severity_counter]
-        # breakpoint()
         return
 
     # Use only for LA
@@ -700,7 +696,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.cust_viol_rangeB = []
         list_min_bus_v = []
         list_max_bus_v = []
-        # breakpoint()
         for tp_cnt in range(len(self.other_load_dss_files)):
             # Apply correct pmpp values to all PV systems
             if dss.PVsystems.Count() > 0:
@@ -744,14 +739,12 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                     self.cust_viol.append(b)
                 if min(bus_v)<self.V_lower_thresh_rangeA and b not in self.cust_viol:
                     self.cust_viol.append(b)
-            # breakpoint()
             # self.overvoltage_violations_rangeA = [i for i in list_max_bus_v if i > self.V_upper_thresh_rangeA]
             # self.undervoltage_violations_rangeA = [i for i in list_min_bus_v if i < self.V_lower_thresh_rangeA]
             #
             # self.overvoltage_violations_rangeB = [i for i in list_max_bus_v if i > self.V_upper_thresh_rangeB]
             # self.undervoltage_violations_rangeB = [i for i in list_min_bus_v if i < self.V_lower_thresh_rangeB]
 
-        # breakpoint()
         return
 
     def get_nodal_violations_orig(self):
@@ -1130,18 +1123,15 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         self.line_violations = {}
         self.all_line_ldgs = {}
         self.solve_diff_tps_lines(defined_line_loading_limit=defined_loading_limit)
-        # breakpoint()
         for key,vals in self.line_violations_alltps.items():
             self.line_violations[key] = [max(vals[0]),vals[1]]
         for key, vals in self.all_line_ldgs_alltps.items():
             self.all_line_ldgs[key] = [max(vals[0]), vals[1]]
-        # breakpoint()
         # print(f"Finished function determine_line_ldgs")
 
     # Use only for LA
     def solve_diff_tps_lines(self, defined_line_loading_limit=None):
         # Uses Kwami's LA100 logic
-        # breakpoint()
         self.logger.info("PVsystems: %s",dss.PVsystems.Count())
         self.line_violations_alltps = {}
         self.all_line_ldgs_alltps = {}
@@ -1382,7 +1372,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         self.write_dss_file(command_string)
         else:
             self.logger.info("This DPV penetration has no line violations")
-        # breakpoint()
         return
 
     def determine_available_xfmr_upgrades(self):
@@ -1504,8 +1493,11 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                     xfmr_limit = kva / (hs_kv)
                 Currents = dss.CktElement.CurrentsMagAng()[:2 * n_phases]
                 xfmr_current = Currents[::2]
+                if math.isinf(max(xfmr_current)):
+                    raise Exception(f"Max current in transformer {xfmr_name} for timepoint {tp_cnt} is infinity! Check!")
                 max_flow = max(xfmr_current)
                 ldg = max_flow / xfmr_limit
+
                 if xfmr_name not in self.all_xfmr_ldgs_alltps:
                     self.all_xfmr_ldgs_alltps[xfmr_name] = [[max(xfmr_current)], xfmr_limit]
                 elif xfmr_name in self.all_xfmr_ldgs_alltps:
@@ -1632,8 +1624,14 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
         if len(self.xfmr_violations)>0:
             # print(len(self.xfmr_violations))
             # print(self.xfmr_violations.items())
-            # breakpoint()
             for key,vals in self.xfmr_violations.items():
+                # add timeout limit  - raise exception if exceeds more than a certain time in seconds
+                TIMEOUT = 120  # seconds
+                start_time = time.time()
+                expire_time = start_time + TIMEOUT
+                # current_time = dt.datetime.now()
+                # expire_time = current_time + dt.timedelta(seconds=TIMEOUT)
+
                 print(f" key{key}, vals{vals}")
                 # Determine which category this DT belongs to
                 # dss.Circuit.SetActiveElement("Transformer.{}".format(key))
@@ -1668,6 +1666,13 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                     per_R_list.append(dss.Properties.Value("%r"))
                 buses_list = dss.CktElement.BusNames()
                 per_losses.append(dss.Properties.Value("%noloadloss"))
+
+                # if time limit is exceeded, then raise exception
+                current_time = time.time()
+                # current_time = dt.datetime.now()
+                if current_time > expire_time:
+                    raise Exception("Time Limit exceeded in function to mitigate transformer violations.")
+
                 # per_losses.append(dss.Properties.Value("%loadloss"))
                 # if per_losses[0] > per_losses[1]:
                 #     self.logger.info("For DT %s, %noloadloss is greater than %loadloss %s, continuing...", key, per_losses)
@@ -1675,7 +1680,9 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                     raise InvalidParameter("For DT {} the rated current values ({} {}) do not match, quitting...".format(key,
                                                                                                           norm_amps,
                                                                                                           vals[1]))
+
                 num_par_dts = int((vals[0] * self.config["xfmr_safety_margin"]) / (vals[1]*self.config["DT loading limit"])) + 1
+
                 # print(f"{vals[0]}, {self.config['xfmr_safety_margin']}, {vals[1]}, {self.config['DT loading limit']}")
                 dt_key = "type_" + "{}_".format(phases) + "{}_".format(num_wdgs)
                 for kv_cnt in range(len(wdg_kv_list)):
@@ -1709,11 +1716,16 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                                 dt_fnd_flag=1
                                 break
 
+                # if time limit is exceeded, then raise exception
+                current_time = time.time()
+                # current_time = dt.datetime.now()
+                if current_time > expire_time:
+                    raise Exception("Time Limit exceeded in function to mitigate transformer violations.")
+
                 if dt_key not in self.avail_xfmr_upgrades or dt_fnd_flag==0:
                     # print("Adding parallel (none in library found)")
                     # Add parallel DTs since no suitable (correct ratings or economical) DT
                     # replacement was found
-
                     # number of parallel transformers should be less than limit
                     if num_par_dts > self.PARALLEL_XFMR_LIMIT:
                         raise Exception(f"Number of parallel transformers determined is {num_par_dts}. "
@@ -1737,6 +1749,12 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                             ll=lead_lag
                         )
 
+                        # if time limit is exceeded, then raise exception
+                        current_time = time.time()
+                        # current_time = dt.datetime.now()
+                        if current_time > expire_time:
+                            raise Exception("Time Limit exceeded in function to mitigate transformer violations.")
+
                         for wdgs_cnt in range(num_wdgs):
                             wdg_str = "wdg={numwdg} bus={bus_wdg} kv={wdgs_kv} kVA={wdgs_kva} %r={wdgs_r} conn={cn}".format(
                                 numwdg=str(wdgs_cnt+1),
@@ -1758,6 +1776,12 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         self.write_dss_file(command_string)
                         # print(f"{dt_cnt} out of {num_par_dts-1}")
                         # print("End of Adding parallel (none in library found)")
+
+                # if time limit is exceeded, then raise exception
+                current_time = time.time()
+                # current_time = dt.datetime.now()
+                if current_time > expire_time:
+                    raise Exception("Time Limit exceeded in function to mitigate transformer violations.")
         else:
             self.logger.info("This DPV penetration has no Transformer thermal violations")
         return
