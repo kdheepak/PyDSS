@@ -645,6 +645,10 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                 #  else if everything is within bounds use nominal pu voltage.
                 maxv_dev = 0
                 minv_dev = 0
+                if math.isinf(max(bus_v)):
+                    continue
+                if max(bus_v) > 1e6:
+                    continue
                 if max(bus_v) > self.max_V_viol:
                     self.max_V_viol = max(bus_v)
                     self.busvmax = b
@@ -1069,7 +1073,6 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
             self.orig_lc_parameters[key] = new_value
         return
 
-
     def determine_available_line_upgrades(self):
         self.avail_line_upgrades = {}
         dss.Lines.First()
@@ -1176,7 +1179,28 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                 line_limit = dss.CktElement.NormalAmps()
                 Currents = dss.CktElement.CurrentsMagAng()[:2 * n_phases]
                 line_current = Currents[::2]
-                ldg = round( max(line_current)/ float(line_limit), 2)
+                if math.isinf(max(line_current)):
+                    tp_name = [*self.other_load_dss_files][tp_cnt]
+                    print(f"({tp_name}): Line {line_name}, timepoint {tp_cnt}"
+                          f": Current is infinity ({line_current}).")
+                    self.logger.info(f"({tp_name}): Line {line_name}, timepoint {tp_cnt}"
+                                     f": Current is infinity ({line_current}).")
+                    if dss.ActiveClass.Next() > 0:
+                        continue
+                    else:
+                        break
+                ldg = round(max(line_current)/float(line_limit), 2)
+                if ldg > 1e6:
+                    tp_name = [*self.other_load_dss_files][tp_cnt]
+                    print(f"({tp_name}): Line {line_name}, timepoint {tp_cnt}"
+                          f": Loading is too high ({ldg}).")
+                    self.logger.info(f"({tp_name}): Line {line_name}, timepoint {tp_cnt}"
+                                     f": Loading is too high ({ldg}).")
+                    if dss.ActiveClass.Next() > 0:
+                        continue
+                    else:
+                        break
+
                 if switch == "False":
                     if line_name not in self.all_line_ldgs_alltps:
                         self.all_line_ldgs_alltps[line_name] = [[max(line_current)], line_limit]
@@ -1345,6 +1369,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
 
                     # number of parallel lines should be less than limit
                     if num_par_lns > self.PARALLEL_LINE_LIMIT:
+                        breakpoint()
                         raise Exception(f"Number of parallel lines determined is {num_par_lns}. "
                                         f"This is greater than limit of {self.PARALLEL_LINE_LIMIT} parallel "
                                         f"lines allowed")
@@ -1494,10 +1519,28 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                 Currents = dss.CktElement.CurrentsMagAng()[:2 * n_phases]
                 xfmr_current = Currents[::2]
                 if math.isinf(max(xfmr_current)):
-                    raise Exception(f"Max current in transformer {xfmr_name} for timepoint {tp_cnt} is infinity! Check!")
+                    tp_name = [*self.other_load_dss_files][tp_cnt]
+                    # raise Exception(f"Max current in transformer {xfmr_name} for timepoint {tp_cnt} is infinity! Check!")
+                    print(f"({tp_name}): Transformer {xfmr_name}, timepoint {tp_cnt}"
+                          f": Current is infinity ({xfmr_current}).")
+                    self.logger.info(f"({tp_name}): Transformer {xfmr_name}, timepoint {tp_cnt}"
+                          f": Current is infinity ({xfmr_current}).")
+                    if dss.Transformers.Next() > 0:
+                        continue
+                    else:
+                        break
                 max_flow = max(xfmr_current)
                 ldg = max_flow / xfmr_limit
-
+                if ldg > 1e6:
+                    tp_name = [*self.other_load_dss_files][tp_cnt]
+                    print(f"({tp_name}): Transformer {xfmr_name}, timepoint {tp_cnt}"
+                          f": Loading is too high ({ldg}).")
+                    self.logger.info(f"({tp_name}): Transformer {xfmr_name}, timepoint {tp_cnt}"
+                                     f": Loading is too high ({ldg}).")
+                    if dss.Transformers.Next() > 0:
+                        continue
+                    else:
+                        break
                 if xfmr_name not in self.all_xfmr_ldgs_alltps:
                     self.all_xfmr_ldgs_alltps[xfmr_name] = [[max(xfmr_current)], xfmr_limit]
                 elif xfmr_name in self.all_xfmr_ldgs_alltps:
@@ -1509,6 +1552,7 @@ class AutomatedThermalUpgrade(AbstractPostprocess):
                         self.xfmr_violations_alltps[xfmr_name][0].append(max(xfmr_current))
                 if not dss.Transformers.Next() > 0:
                     break
+        # breakpoint()
         return
 
     def determine_xfmr_ldgs_alltps_orig(self):
