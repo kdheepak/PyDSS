@@ -155,6 +155,25 @@ class helics_interface:
                         #print(self._subscription_dState[element_name])
         self.c_seconds_old = self.c_seconds
 
+
+    def updateHelicsPublications(self):
+        for element, pub in self._publications.items():
+            fed_name, class_name, object_name, ppty_name = element.split('.')
+            obj_name = '{}.{}'.format(class_name, object_name)
+            obj = self._objects_by_element[obj_name]
+            value = obj.GetValue(ppty_name)
+            if isinstance(value, list):
+                helics.helicsPublicationPublishVector(pub, value)
+            elif isinstance(value, float):
+                helics.helicsPublicationPublishDouble(pub, value)
+            elif isinstance(value, str):
+                helics.helicsPublicationPublishString(pub, value)
+            elif isinstance(value, bool):
+                helics.helicsPublicationPublishBoolean(pub, value)
+            elif isinstance(value, int):
+                helics.helicsPublicationPublishInteger(pub, value)
+        return
+    
     def _registerFederatePublications(self):
         self._file_reader = pyExportReader(
             os.path.join(
@@ -175,24 +194,6 @@ class helics_interface:
                     ''
                 )
                 self._logger.info(f'Publication registered: {name}')
-        return
-
-    def updateHelicsPublications(self):
-        for element, pub in self._publications.items():
-            fed_name, class_name, object_name, ppty_name = element.split('.')
-            obj_name = '{}.{}'.format(class_name, object_name)
-            obj = self._objects_by_element[obj_name]
-            value = obj.GetValue(ppty_name)
-            if isinstance(value, list):
-                helics.helicsPublicationPublishVector(pub, value)
-            elif isinstance(value, float):
-                helics.helicsPublicationPublishDouble(pub, value)
-            elif isinstance(value, str):
-                helics.helicsPublicationPublishString(pub, value)
-            elif isinstance(value, bool):
-                helics.helicsPublicationPublishBoolean(pub, value)
-            elif isinstance(value, int):
-                helics.helicsPublicationPublishInteger(pub, value)
         return
 
     def request_time_increment(self):
